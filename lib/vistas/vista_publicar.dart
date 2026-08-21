@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../datos_falsos.dart';
+import '../datos_en_memoria.dart';
 import '../modelos/modelo_producto.dart';
+import '../modelos/modelo_productor.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
 
@@ -22,15 +23,14 @@ class _VistaPublicarState extends State<VistaPublicar> {
     'Plátano',
     'Frijol Rojo',
   ];
-  final List<String> _unidades = const ['Cajas', 'Quintales', 'Cien'];
+  final List<String> _unidades = const ['Docenas', 'Quintales', 'Cien'];
 
   String _cultivoSeleccionado = 'Piña Monte Lirio';
-  String _unidadSeleccionada = 'Cajas';
+  String _unidadSeleccionada = 'Docenas';
 
   final TextEditingController _controladorProductor = TextEditingController();
   final TextEditingController _controladorComunidad = TextEditingController();
   final TextEditingController _controladorCantidad = TextEditingController();
-  final TextEditingController _controladorMinimo = TextEditingController();
   final TextEditingController _controladorPrecio = TextEditingController();
 
   double get _precioIngresado => double.tryParse(_controladorPrecio.text) ?? 0;
@@ -42,7 +42,6 @@ class _VistaPublicarState extends State<VistaPublicar> {
     _controladorProductor.dispose();
     _controladorComunidad.dispose();
     _controladorCantidad.dispose();
-    _controladorMinimo.dispose();
     _controladorPrecio.dispose();
     super.dispose();
   }
@@ -50,22 +49,32 @@ class _VistaPublicarState extends State<VistaPublicar> {
   void _publicarLote() {
     if (!_formKey.currentState!.validate()) return;
 
+    final partesComunidad = _controladorComunidad.text.trim().split(',');
+    final comunidad = partesComunidad.first.trim();
+    final departamento = partesComunidad.length > 1 ? partesComunidad[1].trim() : '';
+
+    final productor = Productor(
+      id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
+      nombre: _controladorProductor.text.trim(),
+      departamento: departamento,
+      comunidad: comunidad,
+      telefono: '',
+    );
+    DatosEnMemoria.agregarProductor(productor);
+
     final producto = ModeloProducto(
       id: 'p_${DateTime.now().millisecondsSinceEpoch}',
       nombre: _cultivoSeleccionado,
-      nombreProductor: _controladorProductor.text.trim(),
-      comunidad: _controladorComunidad.text.trim(),
+      productorId: productor.id,
       precioPorUnidad: _precioIngresado,
       tipoUnidad: _unidadSeleccionada,
-      pedidoMinimo: int.tryParse(_controladorMinimo.text) ?? 1,
       cantidadDisponible: int.tryParse(_controladorCantidad.text) ?? 0,
       icono: Icons.eco,
       esTratoDirecto: true,
       fechaCosecha: '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
-      beneficioProductor: '+35% directo al productor',
     );
 
-    DatosFalsos.agregarProducto(producto);
+    DatosEnMemoria.agregarProducto(producto);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -145,32 +154,15 @@ class _VistaPublicarState extends State<VistaPublicar> {
             const SizedBox(height: 24),
             Text('Cantidad y precio', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _controladorCantidad,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Disponible',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _controladorMinimo,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Pedido mínimo',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
-                  ),
-                ),
-              ],
+            TextFormField(
+              controller: _controladorCantidad,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Cantidad disponible',
+                prefixIcon: const Icon(Icons.inventory_2),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(

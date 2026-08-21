@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../datos_falsos.dart';
+import '../datos_en_memoria.dart';
 import '../modelos/modelo_pedido.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
@@ -35,12 +35,13 @@ class _VistaPedidoState extends State<VistaPedido> {
 
   void _cambiarCantidad(int delta) {
     final int nueva = _cantidad + delta;
-    if (nueva < widget.producto.pedidoMinimo) return;
+    if (nueva < 1) return;
     if (nueva > widget.producto.cantidadDisponible) return;
     setState(() => _cantidad = nueva);
   }
 
   void _confirmarPedido() {
+    final productor = DatosEnMemoria.obtenerProductorPorId(widget.producto.productorId);
     final String comprador = _controladorComprador.text.trim().isEmpty
         ? 'Comprador Directo'
         : _controladorComprador.text.trim();
@@ -53,7 +54,7 @@ class _VistaPedidoState extends State<VistaPedido> {
       totalPagar: _total,
       fecha: '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
     );
-    DatosFalsos.agregarPedido(pedido);
+    DatosEnMemoria.agregarPedido(pedido);
 
     showDialog(
       context: context,
@@ -63,7 +64,7 @@ class _VistaPedidoState extends State<VistaPedido> {
         title: const Text('¡Pedido Coordinado!'),
         content: Text(
           'Tu reserva de $_cantidad ${widget.producto.tipoUnidad.toLowerCase()} de '
-          '${widget.producto.nombre} fue enviada a ${widget.producto.nombreProductor}. '
+          '${widget.producto.nombre} fue enviada a ${productor?.nombre ?? 'el productor'}. '
           'Se coordinará la entrega directamente contigo.',
           textAlign: TextAlign.center,
         ),
@@ -85,6 +86,7 @@ class _VistaPedidoState extends State<VistaPedido> {
   @override
   Widget build(BuildContext context) {
     final producto = widget.producto;
+    final productor = DatosEnMemoria.obtenerProductorPorId(producto.productorId);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Confirmar Pedido'),
@@ -116,7 +118,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                             children: [
                               Text(producto.nombre, style: Theme.of(context).textTheme.titleLarge),
                               Text(
-                                '${producto.nombreProductor} · ${producto.comunidad}',
+                                '${productor?.nombre ?? 'Productor'} · ${productor?.comunidad ?? ''}',
                                 style: const TextStyle(color: Colors.grey, fontSize: 13),
                               ),
                             ],
@@ -151,7 +153,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Impacto directo: ${producto.beneficioProductor} para la comunidad de ${producto.comunidad}.',
+                              'Impacto directo: este trato beneficia a ${productor?.nombre ?? 'el productor'} y a la comunidad de ${productor?.comunidad ?? '-'}.',
                               style: const TextStyle(fontSize: 12),
                             ),
                           ),

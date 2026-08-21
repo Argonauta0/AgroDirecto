@@ -1,66 +1,97 @@
 import 'package:flutter/material.dart';
 import 'modelos/modelo_producto.dart';
 import 'modelos/modelo_pedido.dart';
+import 'modelos/modelo_productor.dart';
+import 'modelos/modelo_comprador.dart';
 
-class DatosFalsos {
-  DatosFalsos._();
+class DatosEnMemoria {
+  DatosEnMemoria._();
+
+  static final List<Productor> productores = [
+    Productor(
+      id: 'prod1',
+      nombre: 'Don José García',
+      departamento: 'Masaya',
+      comunidad: 'Ticuantepe',
+      telefono: '8888-1111',
+    ),
+    Productor(
+      id: 'prod2',
+      nombre: 'Doña Reyna Blandón',
+      departamento: 'Rivas',
+      comunidad: 'Nandaime',
+      telefono: '8888-2222',
+    ),
+    Productor(
+      id: 'prod3',
+      nombre: 'Carlos Membreño',
+      departamento: 'Rivas',
+      comunidad: 'Belén',
+      telefono: '8888-3333',
+    ),
+    Productor(
+      id: 'prod4',
+      nombre: 'Doña Marta Suárez',
+      departamento: 'Masaya',
+      comunidad: 'Masatepe',
+      telefono: '8888-4444',
+    ),
+  ];
+
+  static final List<Comprador> compradores = [
+    Comprador(
+      id: 'comp1',
+      nombreNegocio: 'Supermercado La Colonia',
+      tipoNegocio: 'Supermercado',
+      ubicacion: 'Managua',
+      telefono: '2222-5555',
+    ),
+  ];
 
   static final List<ModeloProducto> productos = [
     ModeloProducto(
       id: 'p1',
       nombre: 'Piña Monte Lirio',
-      nombreProductor: 'Don José García',
-      comunidad: 'Ticuantepe, Masaya',
+      productorId: 'prod1',
       precioPorUnidad: 350.0,
       tipoUnidad: 'Cien',
-      pedidoMinimo: 1,
       cantidadDisponible: 8,
       icono: Icons.eco,
       esTratoDirecto: true,
       fechaCosecha: '18 de agosto, 2026',
-      beneficioProductor: '+35% directo al productor',
     ),
     ModeloProducto(
       id: 'p2',
       nombre: 'Limón Tahití',
-      nombreProductor: 'Doña Reyna Blandón',
-      comunidad: 'Nandaime, Rivas',
+      productorId: 'prod2',
       precioPorUnidad: 900.0,
       tipoUnidad: 'Quintales',
-      pedidoMinimo: 2,
       cantidadDisponible: 15,
       icono: Icons.spa,
       esTratoDirecto: true,
       fechaCosecha: '19 de agosto, 2026',
-      beneficioProductor: '+40% directo al productor',
     ),
     ModeloProducto(
       id: 'p3',
       nombre: 'Naranja de Jugo',
-      nombreProductor: 'Carlos Membreño',
-      comunidad: 'Belén, Rivas',
+      productorId: 'prod3',
       precioPorUnidad: 420.0,
-      tipoUnidad: 'Cajas',
-      pedidoMinimo: 5,
+      tipoUnidad: 'Docenas',
       cantidadDisponible: 30,
       icono: Icons.eco,
       esTratoDirecto: true,
       fechaCosecha: '15 de agosto, 2026',
-      beneficioProductor: '+30% directo al productor',
     ),
     ModeloProducto(
       id: 'p4',
       nombre: 'Chiltoma Fresca',
-      nombreProductor: 'Doña Marta Suárez',
-      comunidad: 'Masatepe, Masaya',
+      productorId: 'prod4',
       precioPorUnidad: 25.0,
-      tipoUnidad: 'Cajas',
-      pedidoMinimo: 10,
+      tipoUnidad: 'Docenas',
       cantidadDisponible: 60,
       icono: Icons.eco,
       esTratoDirecto: false,
       fechaCosecha: '20 de agosto, 2026',
-      beneficioProductor: '+20% directo al productor',
     ),
   ];
 
@@ -70,6 +101,10 @@ class DatosFalsos {
     productos.insert(0, producto);
   }
 
+  static void agregarProductor(Productor productor) {
+    productores.insert(0, productor);
+  }
+
   static void agregarPedido(ModeloPedido pedido) {
     pedidos.insert(0, pedido);
   }
@@ -77,6 +112,14 @@ class DatosFalsos {
   static ModeloProducto? buscarProductoPorId(String id) {
     try {
       return productos.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Productor? obtenerProductorPorId(String id) {
+    try {
+      return productores.firstWhere((p) => p.id == id);
     } catch (_) {
       return null;
     }

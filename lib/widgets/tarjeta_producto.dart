@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../datos_en_memoria.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 
@@ -10,6 +11,7 @@ class TarjetaProducto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final productor = DatosEnMemoria.obtenerProductorPorId(producto.productorId);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
@@ -41,7 +43,7 @@ class TarjetaProducto extends StatelessWidget {
                             const SizedBox(width: 2),
                             Expanded(
                               child: Text(
-                                '${producto.nombreProductor} · ${producto.comunidad}',
+                                '${productor?.nombre ?? 'Productor'} · ${productor?.comunidad ?? ''}',
                                 style: const TextStyle(fontSize: 12, color: Colors.grey),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -56,29 +58,9 @@ class TarjetaProducto extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'C\$${producto.precioPorUnidad.toStringAsFixed(0)} / ${producto.tipoUnidad}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: ColoresApp.amarilloDestacado.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      producto.beneficioProductor,
-                      style: const TextStyle(
-                        color: ColoresApp.naranjaAviso,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                'C\$${producto.precioPorUnidad.toStringAsFixed(0)} / ${producto.tipoUnidad}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../datos_falsos.dart';
+import '../datos_en_memoria.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
@@ -28,12 +28,14 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
   }
 
   List<ModeloProducto> get _productosFiltrados {
-    return DatosFalsos.productos.where((p) {
+    return DatosEnMemoria.productos.where((p) {
+      final productor = DatosEnMemoria.obtenerProductorPorId(p.productorId);
       final coincideTexto = _textoBusqueda.isEmpty ||
           p.nombre.toLowerCase().contains(_textoBusqueda.toLowerCase()) ||
-          p.nombreProductor.toLowerCase().contains(_textoBusqueda.toLowerCase());
+          (productor?.nombre.toLowerCase().contains(_textoBusqueda.toLowerCase()) ?? false);
       final coincideZona = _zonaSeleccionada == 'Todas' ||
-          p.comunidad.toLowerCase().contains(_zonaSeleccionada.toLowerCase());
+          (productor?.comunidad.toLowerCase().contains(_zonaSeleccionada.toLowerCase()) ?? false) ||
+          (productor?.departamento.toLowerCase().contains(_zonaSeleccionada.toLowerCase()) ?? false);
       return coincideTexto && coincideZona;
     }).toList();
   }
@@ -146,6 +148,7 @@ class _FichaTrazabilidad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final productor = DatosEnMemoria.obtenerProductorPorId(producto.productorId);
     return Container(
       decoration: const BoxDecoration(
         color: ColoresApp.blancoFondo,
@@ -181,7 +184,7 @@ class _FichaTrazabilidad extends StatelessWidget {
                   children: [
                     Text(producto.nombre, style: Theme.of(context).textTheme.titleLarge),
                     Text(
-                      producto.nombreProductor,
+                      productor?.nombre ?? 'Productor',
                       style: const TextStyle(color: Colors.grey),
                     ),
                   ],
@@ -213,12 +216,16 @@ class _FichaTrazabilidad extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _filaFicha(Icons.location_on, 'Comunidad', producto.comunidad),
+          _filaFicha(
+            Icons.location_on,
+            'Comunidad',
+            '${productor?.comunidad ?? '-'}, ${productor?.departamento ?? '-'}',
+          ),
           _filaFicha(Icons.calendar_today, 'Fecha de corte', producto.fechaCosecha),
           _filaFicha(
             Icons.inventory_2,
             'Disponible',
-            '${producto.cantidadDisponible} ${producto.tipoUnidad} · Mínimo ${producto.pedidoMinimo}',
+            '${producto.cantidadDisponible} ${producto.tipoUnidad}',
           ),
           const SizedBox(height: 12),
           Container(
@@ -234,7 +241,7 @@ class _FichaTrazabilidad extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Impacto en la comunidad: ${producto.beneficioProductor}',
+                    'Trato directo con ${productor?.nombre ?? 'el productor'}: mejores ingresos para su comunidad.',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -251,7 +258,7 @@ class _FichaTrazabilidad extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => VistaPedido(
                       producto: producto,
-                      cantidadInicial: producto.pedidoMinimo,
+                      cantidadInicial: 1,
                     ),
                   ),
                 );
