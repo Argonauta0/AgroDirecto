@@ -8,6 +8,13 @@ void main() {
     await tester.pumpWidget(const AplicacionAgroDirecto());
 
     expect(find.text('AgroDirecto'), findsOneWidget);
+
+    final botonComprador = find.text('Soy Comprador / Restaurante');
+    await tester.ensureVisible(botonComprador);
+    await tester.pumpAndSettle();
+    await tester.tap(botonComprador);
+    await tester.pumpAndSettle();
+
     expect(find.byIcon(Icons.shopping_basket), findsOneWidget);
     expect(find.text('Piña Monte Lirio'), findsOneWidget);
   });

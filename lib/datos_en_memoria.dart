@@ -124,4 +124,38 @@ class DatosEnMemoria {
       return null;
     }
   }
+
+  static Comprador? obtenerCompradorPorId(String id) {
+    try {
+      return compradores.firstWhere((c) => c.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Productor? productorActual;
+  static Comprador? compradorActual;
+  static String rolActual = 'ninguno';
+
+  static void iniciarSesionComoProductor(String id) {
+    final productor = obtenerProductorPorId(id);
+    if (productor == null) return;
+    productorActual = productor;
+    compradorActual = null;
+    rolActual = 'productor';
+  }
+
+  static void iniciarSesionComoComprador(String id) {
+    final comprador = obtenerCompradorPorId(id);
+    if (comprador == null) return;
+    compradorActual = comprador;
+    productorActual = null;
+    rolActual = 'comprador';
+  }
+
+  static void cerrarSesion() {
+    productorActual = null;
+    compradorActual = null;
+    rolActual = 'ninguno';
+  }
 }

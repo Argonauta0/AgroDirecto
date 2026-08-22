@@ -4,6 +4,7 @@ import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
 import '../widgets/tarjeta_producto.dart';
+import 'vista_login.dart';
 import 'vista_pedido.dart';
 import 'vista_publicar.dart';
 
@@ -46,6 +47,14 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
     );
   }
 
+  void _cerrarSesion() {
+    DatosEnMemoria.cerrarSesion();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const VistaLogin()),
+      (route) => false,
+    );
+  }
+
   void _abrirFichaTrazabilidad(ModeloProducto producto) {
     showModalBottomSheet(
       context: context,
@@ -69,6 +78,11 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
             onPressed: _abrirCanasta,
             icon: const Icon(Icons.shopping_basket),
             tooltip: 'Canasta',
+          ),
+          IconButton(
+            onPressed: _cerrarSesion,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),

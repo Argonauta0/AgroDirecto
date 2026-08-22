@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'tema_app.dart';
-import 'vistas/vista_catalogo.dart';
+import 'vistas/vista_login.dart';
 
 void main() {
   runApp(const AplicacionAgroDirecto());
@@ -15,7 +15,7 @@ class AplicacionAgroDirecto extends StatelessWidget {
       title: 'AgroDirecto',
       debugShowCheckedModeBanner: false,
       theme: TemaApp.temaClaro,
-      home: const VistaCatalogo(),
+      home: const VistaLogin(),
     );
   }
 }

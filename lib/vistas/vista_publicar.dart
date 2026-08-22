@@ -4,6 +4,7 @@ import '../modelos/modelo_producto.dart';
 import '../modelos/modelo_productor.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
+import 'vista_login.dart';
 
 class VistaPublicar extends StatefulWidget {
   const VistaPublicar({super.key});
@@ -85,15 +86,28 @@ class _VistaPublicarState extends State<VistaPublicar> {
     Navigator.of(context).pop();
   }
 
+  void _cerrarSesion() {
+    DatosEnMemoria.cerrarSesion();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const VistaLogin()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Publicar Cosecha'),
-        actions: const [
-          Padding(
+        actions: [
+          const Padding(
             padding: EdgeInsets.only(right: 12),
             child: Center(child: IndicadorModoRural()),
+          ),
+          IconButton(
+            onPressed: _cerrarSesion,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),
