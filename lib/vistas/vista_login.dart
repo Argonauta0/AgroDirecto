@@ -3,6 +3,7 @@ import '../datos_en_memoria.dart';
 import '../tema_app.dart';
 import 'vista_catalogo.dart';
 import 'vista_panel_productor.dart';
+import 'vista_registro.dart';
 
 class VistaLogin extends StatefulWidget {
   const VistaLogin({super.key});
@@ -31,6 +32,12 @@ class _VistaLoginState extends State<VistaLogin> {
         content: Text('Usa el acceso rápido para demo mientras habilitamos el inicio con teléfono.'),
         backgroundColor: ColoresApp.naranjaAviso,
       ),
+    );
+  }
+
+  void _irARegistro() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const VistaRegistro()),
     );
   }
 
@@ -119,6 +126,32 @@ class _VistaLoginState extends State<VistaLogin> {
                       onPressed: _iniciarSesionManual,
                       icon: const Icon(Icons.login),
                       label: const Text('Iniciar Sesión'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          '¿No tienes una cuenta?',
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                        TextButton(
+                          onPressed: _irARegistro,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Regístrate aquí',
+                            style: TextStyle(
+                              color: ColoresApp.verdePrincipal,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

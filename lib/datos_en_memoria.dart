@@ -109,6 +109,10 @@ class DatosEnMemoria {
     productores.insert(0, productor);
   }
 
+  static void agregarComprador(Comprador comprador) {
+    compradores.insert(0, comprador);
+  }
+
   static void agregarPedido(ModeloPedido pedido) {
     pedidos.insert(0, pedido);
   }
