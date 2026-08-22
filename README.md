@@ -1,7 +1,6 @@
 # AgroDirecto
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
 ![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.13-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-%3E%3D3.13-0175C2?logo=dart&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)
@@ -86,13 +85,7 @@ flutter doctor
 
 3. **Variables de entorno / Configuración**
 
-   El proyecto **no requiere** archivo `.env` ni llaves de API en su estado actual: toda la data (productores, compradores, productos y pedidos) vive en memoria dentro de `lib/datos_en_memoria.dart` y se reinicia en cada ejecución. Si se integra un backend real, se recomienda añadir un archivo `.env` (excluido de control de versiones) siguiendo este formato de referencia:
-
-   ```bash
-   # .env.example (referencia para una futura integración de backend)
-   API_BASE_URL=https://api.agrodirecto.com
-   API_KEY=tu_api_key_aqui
-   ```
+   El proyecto **no requiere** archivo `.env` ni llaves de API en su estado actual: toda la data (productores, compradores, productos y pedidos) vive en memoria dentro de `lib/datos_en_memoria.dart` y se reinicia en cada ejecución. 
 
 4. **Verificar dispositivos disponibles**
 
@@ -139,6 +132,4 @@ flutter build appbundle --release
 | `flutter build apk --release` | Genera el APK de producción                                |
 | `flutter clean`               | Limpia archivos de build y caché del proyecto               |
 
-## Licencia
 
-Distribuido bajo la licencia MIT. Consulta el archivo `LICENSE` para más información.
