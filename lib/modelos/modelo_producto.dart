@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class ModeloProducto {
+class Producto {
   final String id;
   final String nombre;
   final String productorId;
@@ -9,9 +9,9 @@ class ModeloProducto {
   final int cantidadDisponible;
   final IconData icono;
   final bool esTratoDirecto;
-  final String fechaCosecha;
+  final DateTime fechaCosecha;
 
-  const ModeloProducto({
+  const Producto({
     required this.id,
     required this.nombre,
     required this.productorId,

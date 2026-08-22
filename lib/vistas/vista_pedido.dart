@@ -3,10 +3,11 @@ import '../datos_en_memoria.dart';
 import '../modelos/modelo_pedido.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
+import '../utilidades/formato_fecha.dart';
 import '../widgets/indicador_modo_rural.dart';
 
 class VistaPedido extends StatefulWidget {
-  final ModeloProducto producto;
+  final Producto producto;
   final int cantidadInicial;
 
   const VistaPedido({super.key, required this.producto, required this.cantidadInicial});
@@ -17,18 +18,11 @@ class VistaPedido extends StatefulWidget {
 
 class _VistaPedidoState extends State<VistaPedido> {
   late int _cantidad;
-  final TextEditingController _controladorComprador = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _cantidad = widget.cantidadInicial;
-  }
-
-  @override
-  void dispose() {
-    _controladorComprador.dispose();
-    super.dispose();
   }
 
   double get _total => _cantidad * widget.producto.precioPorUnidad;
@@ -42,17 +36,15 @@ class _VistaPedidoState extends State<VistaPedido> {
 
   void _confirmarPedido() {
     final productor = DatosEnMemoria.obtenerProductorPorId(widget.producto.productorId);
-    final String comprador = _controladorComprador.text.trim().isEmpty
-        ? 'Comprador Directo'
-        : _controladorComprador.text.trim();
+    final compradorActual = DatosEnMemoria.compradorActual;
 
-    final pedido = ModeloPedido(
+    final pedido = Pedido(
       id: 'ped_${DateTime.now().millisecondsSinceEpoch}',
       productoId: widget.producto.id,
-      nombreComprador: comprador,
+      compradorId: compradorActual?.id ?? '',
       cantidadSolicitada: _cantidad,
       totalPagar: _total,
-      fecha: '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+      fecha: DateTime.now(),
     );
     DatosEnMemoria.agregarPedido(pedido);
 
@@ -134,7 +126,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Sello de Trazabilidad · Cosecha: ${producto.fechaCosecha}',
+                            'Sello de Trazabilidad · Cosecha: ${formatearFecha(producto.fechaCosecha)}',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -167,12 +159,26 @@ class _VistaPedidoState extends State<VistaPedido> {
             const SizedBox(height: 16),
             Text('Datos del comprador', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            TextField(
-              controller: _controladorComprador,
-              decoration: InputDecoration(
-                hintText: 'Ej. Comedor Familiar, Supermercado Local...',
-                prefixIcon: const Icon(Icons.storefront),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ColoresApp.verdeClaro.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ColoresApp.verdeClaro),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.storefront, color: ColoresApp.verdePrincipal),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      DatosEnMemoria.compradorActual?.nombreNegocio ??
+                          'Sesión de comprador no encontrada',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),

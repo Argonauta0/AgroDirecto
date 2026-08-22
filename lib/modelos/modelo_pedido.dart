@@ -1,15 +1,15 @@
-class ModeloPedido {
+class Pedido {
   final String id;
   final String productoId;
-  final String nombreComprador;
+  final String compradorId;
   final int cantidadSolicitada;
   final double totalPagar;
-  final String fecha;
+  final DateTime fecha;
 
-  const ModeloPedido({
+  const Pedido({
     required this.id,
     required this.productoId,
-    required this.nombreComprador,
+    required this.compradorId,
     required this.cantidadSolicitada,
     required this.totalPagar,
     required this.fecha,

@@ -30,11 +30,11 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
     setState(() {});
   }
 
-  void _verDetalle(BuildContext context, ModeloProducto producto, String etiqueta) {
+  void _verDetalle(BuildContext context, Producto producto, String etiqueta) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(etiqueta)));
   }
 
-  Future<void> _confirmarEliminar(BuildContext context, ModeloProducto producto) async {
+  Future<void> _confirmarEliminar(BuildContext context, Producto producto) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -67,10 +67,10 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
   Widget build(BuildContext context) {
     final productorActual = DatosEnMemoria.productorActual;
     final idProductor = productorActual?.id;
-    final List<ModeloProducto> misProductos = DatosEnMemoria.productos
+    final List<Producto> misProductos = DatosEnMemoria.productos
         .where((p) => p.productorId == idProductor)
         .toList();
-    final List<ModeloProducto> otrosProductos = DatosEnMemoria.productos
+    final List<Producto> otrosProductos = DatosEnMemoria.productos
         .where((p) => p.productorId != idProductor)
         .toList();
 

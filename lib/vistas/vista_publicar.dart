@@ -5,25 +5,6 @@ import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
 import 'vista_login.dart';
 
-const List<String> _mesesEnEspanol = [
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
-  'julio',
-  'agosto',
-  'septiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-];
-
-String _formatearFecha(DateTime fecha) {
-  return '${fecha.day} de ${_mesesEnEspanol[fecha.month - 1]}, ${fecha.year}';
-}
-
 class VistaPublicar extends StatefulWidget {
   const VistaPublicar({super.key});
 
@@ -69,7 +50,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
 
     final cultivo = _controladorCultivo.text.trim();
 
-    final producto = ModeloProducto(
+    final producto = Producto(
       id: 'p_${DateTime.now().millisecondsSinceEpoch}',
       nombre: cultivo,
       productorId: productorActual.id,
@@ -78,7 +59,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
       cantidadDisponible: int.parse(_controladorCantidad.text),
       icono: Icons.eco,
       esTratoDirecto: true,
-      fechaCosecha: _formatearFecha(DateTime.now()),
+      fechaCosecha: DateTime.now(),
     );
 
     DatosEnMemoria.agregarProducto(producto);

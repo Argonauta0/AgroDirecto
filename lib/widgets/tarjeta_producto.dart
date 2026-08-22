@@ -4,7 +4,7 @@ import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 
 class TarjetaProducto extends StatelessWidget {
-  final ModeloProducto producto;
+  final Producto producto;
   final VoidCallback onTap;
   final VoidCallback? onEliminar;
 

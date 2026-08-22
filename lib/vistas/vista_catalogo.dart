@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
+import '../utilidades/formato_fecha.dart';
 import '../widgets/indicador_modo_rural.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'vista_login.dart';
@@ -27,7 +28,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
     super.dispose();
   }
 
-  List<ModeloProducto> get _productosFiltrados {
+  List<Producto> get _productosFiltrados {
     return DatosEnMemoria.productos.where((p) {
       final productor = DatosEnMemoria.obtenerProductorPorId(p.productorId);
       final coincideTexto = _textoBusqueda.isEmpty ||
@@ -54,7 +55,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
     );
   }
 
-  void _abrirFichaTrazabilidad(ModeloProducto producto) {
+  void _abrirFichaTrazabilidad(Producto producto) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -147,7 +148,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
 }
 
 class _FichaTrazabilidad extends StatelessWidget {
-  final ModeloProducto producto;
+  final Producto producto;
 
   const _FichaTrazabilidad({required this.producto});
 
@@ -226,7 +227,7 @@ class _FichaTrazabilidad extends StatelessWidget {
             'Comunidad',
             '${productor?.comunidad ?? '-'}, ${productor?.departamento ?? '-'}',
           ),
-          _filaFicha(Icons.calendar_today, 'Fecha de corte', producto.fechaCosecha),
+          _filaFicha(Icons.calendar_today, 'Fecha de corte', formatearFecha(producto.fechaCosecha)),
           _filaFicha(
             Icons.inventory_2,
             'Disponible',

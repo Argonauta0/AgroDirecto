@@ -48,8 +48,8 @@ class DatosEnMemoria {
     ),
   ];
 
-  static final List<ModeloProducto> productos = [
-    ModeloProducto(
+  static final List<Producto> productos = [
+    Producto(
       id: 'p1',
       nombre: 'Piña Monte Lirio',
       productorId: 'prod1',
@@ -58,9 +58,9 @@ class DatosEnMemoria {
       cantidadDisponible: 8,
       icono: Icons.eco,
       esTratoDirecto: true,
-      fechaCosecha: '18 de agosto, 2026',
+      fechaCosecha: DateTime(2026, 8, 18),
     ),
-    ModeloProducto(
+    Producto(
       id: 'p2',
       nombre: 'Limón Tahití',
       productorId: 'prod2',
@@ -69,9 +69,9 @@ class DatosEnMemoria {
       cantidadDisponible: 15,
       icono: Icons.spa,
       esTratoDirecto: true,
-      fechaCosecha: '19 de agosto, 2026',
+      fechaCosecha: DateTime(2026, 8, 19),
     ),
-    ModeloProducto(
+    Producto(
       id: 'p3',
       nombre: 'Naranja de Jugo',
       productorId: 'prod3',
@@ -80,9 +80,9 @@ class DatosEnMemoria {
       cantidadDisponible: 30,
       icono: Icons.eco,
       esTratoDirecto: true,
-      fechaCosecha: '15 de agosto, 2026',
+      fechaCosecha: DateTime(2026, 8, 15),
     ),
-    ModeloProducto(
+    Producto(
       id: 'p4',
       nombre: 'Chiltoma Fresca',
       productorId: 'prod4',
@@ -91,13 +91,13 @@ class DatosEnMemoria {
       cantidadDisponible: 60,
       icono: Icons.eco,
       esTratoDirecto: false,
-      fechaCosecha: '20 de agosto, 2026',
+      fechaCosecha: DateTime(2026, 8, 20),
     ),
   ];
 
-  static final List<ModeloPedido> pedidos = [];
+  static final List<Pedido> pedidos = [];
 
-  static void agregarProducto(ModeloProducto producto) {
+  static void agregarProducto(Producto producto) {
     productos.insert(0, producto);
   }
 
@@ -113,11 +113,11 @@ class DatosEnMemoria {
     compradores.insert(0, comprador);
   }
 
-  static void agregarPedido(ModeloPedido pedido) {
+  static void agregarPedido(Pedido pedido) {
     pedidos.insert(0, pedido);
   }
 
-  static ModeloProducto? buscarProductoPorId(String id) {
+  static Producto? buscarProductoPorId(String id) {
     try {
       return productos.firstWhere((p) => p.id == id);
     } catch (_) {
