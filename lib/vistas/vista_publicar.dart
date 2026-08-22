@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
 import '../modelos/modelo_producto.dart';
-import '../modelos/modelo_productor.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
 import 'vista_login.dart';
+
+const List<String> _mesesEnEspanol = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+
+String _formatearFecha(DateTime fecha) {
+  return '${fecha.day} de ${_mesesEnEspanol[fecha.month - 1]}, ${fecha.year}';
+}
 
 class VistaPublicar extends StatefulWidget {
   const VistaPublicar({super.key});
@@ -16,7 +34,7 @@ class VistaPublicar extends StatefulWidget {
 class _VistaPublicarState extends State<VistaPublicar> {
   final _formKey = GlobalKey<FormState>();
 
-  final List<String> _cultivos = const [
+  final List<String> _cultivosSugeridos = const [
     'Piña Monte Lirio',
     'Limón Tahití',
     'Naranja de Jugo',
@@ -26,11 +44,9 @@ class _VistaPublicarState extends State<VistaPublicar> {
   ];
   final List<String> _unidades = const ['Docenas', 'Quintales', 'Cien'];
 
-  String _cultivoSeleccionado = 'Piña Monte Lirio';
   String _unidadSeleccionada = 'Docenas';
+  late TextEditingController _controladorCultivo;
 
-  final TextEditingController _controladorProductor = TextEditingController();
-  final TextEditingController _controladorComunidad = TextEditingController();
   final TextEditingController _controladorCantidad = TextEditingController();
   final TextEditingController _controladorPrecio = TextEditingController();
 
@@ -40,8 +56,6 @@ class _VistaPublicarState extends State<VistaPublicar> {
 
   @override
   void dispose() {
-    _controladorProductor.dispose();
-    _controladorComunidad.dispose();
     _controladorCantidad.dispose();
     _controladorPrecio.dispose();
     super.dispose();
@@ -50,36 +64,28 @@ class _VistaPublicarState extends State<VistaPublicar> {
   void _publicarLote() {
     if (!_formKey.currentState!.validate()) return;
 
-    final partesComunidad = _controladorComunidad.text.trim().split(',');
-    final comunidad = partesComunidad.first.trim();
-    final departamento = partesComunidad.length > 1 ? partesComunidad[1].trim() : '';
+    final productorActual = DatosEnMemoria.productorActual;
+    if (productorActual == null) return;
 
-    final productor = Productor(
-      id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
-      nombre: _controladorProductor.text.trim(),
-      departamento: departamento,
-      comunidad: comunidad,
-      telefono: '',
-    );
-    DatosEnMemoria.agregarProductor(productor);
+    final cultivo = _controladorCultivo.text.trim();
 
     final producto = ModeloProducto(
       id: 'p_${DateTime.now().millisecondsSinceEpoch}',
-      nombre: _cultivoSeleccionado,
-      productorId: productor.id,
-      precioPorUnidad: _precioIngresado,
+      nombre: cultivo,
+      productorId: productorActual.id,
+      precioPorUnidad: double.parse(_controladorPrecio.text),
       tipoUnidad: _unidadSeleccionada,
-      cantidadDisponible: int.tryParse(_controladorCantidad.text) ?? 0,
+      cantidadDisponible: int.parse(_controladorCantidad.text),
       icono: Icons.eco,
       esTratoDirecto: true,
-      fechaCosecha: '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+      fechaCosecha: _formatearFecha(DateTime.now()),
     );
 
     DatosEnMemoria.agregarProducto(producto);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Lote de $_cultivoSeleccionado publicado con éxito'),
+        content: Text('Lote de $cultivo publicado con éxito'),
         backgroundColor: ColoresApp.verdePrincipal,
       ),
     );
@@ -96,6 +102,8 @@ class _VistaPublicarState extends State<VistaPublicar> {
 
   @override
   Widget build(BuildContext context) {
+    final productorActual = DatosEnMemoria.productorActual;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Publicar Cosecha'),
@@ -116,41 +124,53 @@ class _VistaPublicarState extends State<VistaPublicar> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('¿Quién publica?', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _controladorProductor,
-              decoration: InputDecoration(
-                labelText: 'Nombre del productor',
-                prefixIcon: const Icon(Icons.person),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ColoresApp.verdeClaro.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ColoresApp.verdeClaro),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu nombre' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _controladorComunidad,
-              decoration: InputDecoration(
-                labelText: 'Comunidad (Ej. Ticuantepe, Masaya)',
-                prefixIcon: const Icon(Icons.location_on),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  const Icon(Icons.person, color: ColoresApp.verdePrincipal),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      productorActual != null
+                          ? '${productorActual.nombre} • ${productorActual.comunidad}, ${productorActual.departamento}'
+                          : 'Sesión de productor no encontrada',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu comunidad' : null,
             ),
             const SizedBox(height: 24),
             Text('¿Qué vas a vender?', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue: _cultivoSeleccionado,
-              decoration: InputDecoration(
-                labelText: 'Cultivo',
-                prefixIcon: const Icon(Icons.eco),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              items: _cultivos
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (v) => setState(() => _cultivoSeleccionado = v ?? _cultivoSeleccionado),
+            Autocomplete<String>(
+              optionsBuilder: (TextEditingValue textEditingValue) {
+                if (textEditingValue.text.isEmpty) return _cultivosSugeridos;
+                return _cultivosSugeridos.where(
+                  (c) => c.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+                );
+              },
+              fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                _controladorCultivo = controller;
+                return TextFormField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    labelText: 'Cultivo',
+                    hintText: 'Ej. Piña Monte Lirio',
+                    prefixIcon: const Icon(Icons.eco),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa el cultivo' : null,
+                );
+              },
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -176,7 +196,11 @@ class _VistaPublicarState extends State<VistaPublicar> {
                 prefixIcon: const Icon(Icons.inventory_2),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+              validator: (v) {
+                final n = int.tryParse(v ?? '');
+                if (n == null || n <= 0) return 'Ingresa una cantidad válida';
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(

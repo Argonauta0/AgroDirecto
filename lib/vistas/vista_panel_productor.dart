@@ -7,9 +7,14 @@ import '../widgets/tarjeta_producto.dart';
 import 'vista_login.dart';
 import 'vista_publicar.dart';
 
-class VistaPanelProductor extends StatelessWidget {
+class VistaPanelProductor extends StatefulWidget {
   const VistaPanelProductor({super.key});
 
+  @override
+  State<VistaPanelProductor> createState() => _VistaPanelProductorState();
+}
+
+class _VistaPanelProductorState extends State<VistaPanelProductor> {
   void _cerrarSesion(BuildContext context) {
     DatosEnMemoria.cerrarSesion();
     Navigator.of(context).pushAndRemoveUntil(
@@ -18,14 +23,44 @@ class VistaPanelProductor extends StatelessWidget {
     );
   }
 
-  void _publicarCosecha(BuildContext context) {
-    Navigator.of(context).push(
+  void _publicarCosecha(BuildContext context) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const VistaPublicar()),
     );
+    setState(() {});
   }
 
   void _verDetalle(BuildContext context, ModeloProducto producto, String etiqueta) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(etiqueta)));
+  }
+
+  Future<void> _confirmarEliminar(BuildContext context, ModeloProducto producto) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('¿Eliminar ${producto.nombre}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    DatosEnMemoria.eliminarProducto(producto.id);
+    setState(() {});
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('"${producto.nombre}" fue eliminado.')),
+    );
   }
 
   @override
@@ -100,6 +135,7 @@ class VistaPanelProductor extends StatelessWidget {
                       producto,
                       '${producto.cantidadDisponible} ${producto.tipoUnidad} disponibles',
                     ),
+                    onEliminar: () => _confirmarEliminar(context, producto),
                   ),
                 ),
               ],

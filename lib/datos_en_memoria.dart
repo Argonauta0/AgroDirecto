@@ -101,6 +101,10 @@ class DatosEnMemoria {
     productos.insert(0, producto);
   }
 
+  static void eliminarProducto(String id) {
+    productos.removeWhere((p) => p.id == id);
+  }
+
   static void agregarProductor(Productor productor) {
     productores.insert(0, productor);
   }

@@ -6,8 +6,14 @@ import '../tema_app.dart';
 class TarjetaProducto extends StatelessWidget {
   final ModeloProducto producto;
   final VoidCallback onTap;
+  final VoidCallback? onEliminar;
 
-  const TarjetaProducto({super.key, required this.producto, required this.onTap});
+  const TarjetaProducto({
+    super.key,
+    required this.producto,
+    required this.onTap,
+    this.onEliminar,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +64,26 @@ class TarjetaProducto extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                'C\$${producto.precioPorUnidad.toStringAsFixed(0)} / ${producto.tipoUnidad}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'C\$${producto.precioPorUnidad.toStringAsFixed(0)} / ${producto.tipoUnidad}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                  if (onEliminar != null)
+                    TextButton.icon(
+                      onPressed: onEliminar,
+                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                      label: const Text('Borrar', style: TextStyle(color: Colors.red, fontSize: 13)),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),

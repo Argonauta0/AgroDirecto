@@ -6,7 +6,6 @@ import '../widgets/indicador_modo_rural.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'vista_login.dart';
 import 'vista_pedido.dart';
-import 'vista_publicar.dart';
 
 class VistaCatalogo extends StatefulWidget {
   const VistaCatalogo({super.key});
@@ -85,14 +84,6 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
             tooltip: 'Cerrar sesión',
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const VistaPublicar()),
-        ),
-        backgroundColor: ColoresApp.naranjaAviso,
-        icon: const Icon(Icons.add),
-        label: const Text('Publicar'),
       ),
       body: Column(
         children: [
