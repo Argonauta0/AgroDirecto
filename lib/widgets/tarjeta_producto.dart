@@ -15,6 +15,26 @@ class TarjetaProducto extends StatelessWidget {
     this.onEliminar,
   });
 
+  /// Fondo del chip de estado. "Activa" usa un tinte suave (estado normal);
+  /// "Parcialmente Vendida" y "Pausada" usan relleno sólido para llamar la
+  /// atención; "Agotada" usa gris neutro. El texto se resuelve con
+  /// [ColoresApp.colorTextoSobre] para garantizar contraste WCAG AA.
+  Color _fondoEstado(OfertaLote oferta) {
+    if (oferta.estado == EstadoOferta.pausada) return ColoresApp.naranjaAviso;
+    if (oferta.estado == EstadoOferta.agotado) return Colors.grey.shade300;
+    if (oferta.cantidadDisponible < oferta.cantidadTotal) return ColoresApp.amarilloDestacado;
+    return ColoresApp.verdeClaro.withValues(alpha: 0.25);
+  }
+
+  Color _textoEstado(OfertaLote oferta) {
+    if (oferta.estado == EstadoOferta.agotado) return Colors.black54;
+    if (oferta.estado == EstadoOferta.disponible &&
+        oferta.cantidadDisponible >= oferta.cantidadTotal) {
+      return ColoresApp.verdeOscuro;
+    }
+    return ColoresApp.colorTextoSobre(_fondoEstado(oferta));
+  }
+
   @override
   Widget build(BuildContext context) {
     final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
@@ -60,31 +80,42 @@ class TarjetaProducto extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (oferta.estado == EstadoOferta.agotado)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _fondoEstado(oferta),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      oferta.estadoVisualTexto,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: _textoEstado(oferta),
                       ),
-                      child: const Text(
-                        'Agotado',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54),
-                      ),
-                    )
-                  else
-                    const Icon(Icons.verified, color: ColoresApp.verdePrincipal, size: 20),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: ColoresApp.naranjaAviso,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
                       'C\$${oferta.precioUnitario.toStringAsFixed(0)} / ${oferta.unidadMedida.etiqueta}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
+                  const Spacer(),
                   if (onEliminar != null)
                     TextButton.icon(
                       onPressed: onEliminar,

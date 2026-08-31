@@ -29,7 +29,10 @@ class _VistaLoginState extends State<VistaLogin> {
     if (!_formKey.currentState!.validate()) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Usa el acceso rápido para demo mientras habilitamos el inicio con teléfono.'),
+        content: Text(
+          'Usa el acceso rápido para demo mientras habilitamos el inicio con teléfono.',
+          style: TextStyle(color: Colors.black87),
+        ),
         backgroundColor: ColoresApp.naranjaAviso,
       ),
     );
@@ -212,6 +215,10 @@ class _TarjetaAccesoDemo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Naranja tiene demasiada luminancia para servir como color de ícono
+    // sobre el tinte casi blanco del CircleAvatar (no cumple el 3:1 de WCAG);
+    // se resuelve con una variante oscura accesible solo para ese caso.
+    final Color colorIcono = ColoresApp.colorAcentoAccesible(color);
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -227,7 +234,7 @@ class _TarjetaAccesoDemo extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: color.withValues(alpha: 0.15),
-                child: Icon(icono, color: color),
+                child: Icon(icono, color: colorIcono),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -245,7 +252,7 @@ class _TarjetaAccesoDemo extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: color),
+              Icon(Icons.arrow_forward_ios, size: 16, color: colorIcono),
             ],
           ),
         ),

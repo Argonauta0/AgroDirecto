@@ -373,7 +373,7 @@ class _FichaTrazabilidad extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.eco, color: ColoresApp.naranjaAviso),
+                const Icon(Icons.eco, color: ColoresApp.verdeOscuro),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -608,7 +608,8 @@ class _HojaFiltrosState extends State<_HojaFiltros> {
                 return FilterChip(
                   label: Text(modalidad.etiqueta),
                   selected: seleccionada,
-                  selectedColor: ColoresApp.verdeClaro,
+                  selectedColor: ColoresApp.verdeClaro.withValues(alpha: 0.35),
+                  checkmarkColor: ColoresApp.verdeOscuro,
                   labelStyle: TextStyle(
                     color: seleccionada ? ColoresApp.verdeOscuro : Colors.black87,
                     fontWeight: seleccionada ? FontWeight.bold : FontWeight.normal,

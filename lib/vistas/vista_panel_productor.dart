@@ -4,6 +4,7 @@ import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
 import '../widgets/tarjeta_producto.dart';
+import 'vista_editar_oferta.dart';
 import 'vista_login.dart';
 import 'vista_publicar.dart';
 
@@ -32,6 +33,13 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
 
   void _verDetalle(BuildContext context, OfertaLote oferta, String etiqueta) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(etiqueta)));
+  }
+
+  Future<void> _editarOferta(BuildContext context, OfertaLote oferta) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => VistaEditarOferta(ofertaId: oferta.id)),
+    );
+    setState(() {});
   }
 
   Future<void> _confirmarEliminar(BuildContext context, OfertaLote oferta) async {
@@ -133,11 +141,7 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
                 ...misOfertas.map(
                   (oferta) => TarjetaProducto(
                     oferta: oferta,
-                    onTap: () => _verDetalle(
-                      context,
-                      oferta,
-                      '${oferta.cantidadDisponible} ${oferta.unidadMedida.etiqueta} disponibles',
-                    ),
+                    onTap: () => _editarOferta(context, oferta),
                     onEliminar: () => _confirmarEliminar(context, oferta),
                   ),
                 ),

@@ -19,10 +19,14 @@ class _IndicadorModoRuralState extends State<IndicadorModoRural> {
 
   @override
   Widget build(BuildContext context) {
-    final Color colorFondo = _sincronizado
-        ? ColoresApp.verdeClaro.withValues(alpha: 0.25)
-        : ColoresApp.naranjaAviso.withValues(alpha: 0.2);
-    final Color colorTexto = _sincronizado ? ColoresApp.verdeOscuro : ColoresApp.naranjaAviso;
+    // Estado "sin conexión" usa relleno sólido en vez de un tinte diluido:
+    // naranja de marca a esta opacidad no alcanza el contraste 3:1 que
+    // exige WCAG para texto/íconos, así que se resuelve con
+    // ColoresApp.colorTextoSobre para garantizar accesibilidad.
+    final Color colorFondo =
+        _sincronizado ? ColoresApp.verdeClaro.withValues(alpha: 0.2) : ColoresApp.naranjaAviso;
+    final Color colorTexto =
+        _sincronizado ? ColoresApp.verdeOscuro : ColoresApp.colorTextoSobre(ColoresApp.naranjaAviso);
     final IconData icono = _sincronizado ? Icons.cloud_done : Icons.cloud_off;
     final String texto = _sincronizado ? 'Sincronizado' : 'Modo Campo (Sin Conexión)';
 
@@ -33,7 +37,7 @@ class _IndicadorModoRuralState extends State<IndicadorModoRural> {
         decoration: BoxDecoration(
           color: colorFondo,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorTexto, width: 1),
+          border: _sincronizado ? Border.all(color: colorTexto, width: 1) : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

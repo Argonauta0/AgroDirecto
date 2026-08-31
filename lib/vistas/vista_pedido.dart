@@ -169,7 +169,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.eco, color: ColoresApp.naranjaAviso, size: 20),
+                          const Icon(Icons.eco, color: ColoresApp.verdeOscuro, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -255,7 +255,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                     Text(
                       'C\$${_total.toStringAsFixed(0)}',
                       style: const TextStyle(
-                        color: ColoresApp.amarilloDestacado,
+                        color: Colors.white,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -271,6 +271,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                 onPressed: _confirmarPedido,
                 icon: const Icon(Icons.support_agent),
                 label: const Text('Confirmar y Coordinar Entrega'),
+                style: TemaApp.botonNaranja,
               ),
             ),
             const SizedBox(height: 16),

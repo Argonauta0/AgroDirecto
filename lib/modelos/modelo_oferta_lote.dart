@@ -74,10 +74,12 @@ extension ModalidadLogisticaOfertaEtiqueta on ModalidadLogisticaOferta {
 
 enum EstadoOferta {
   disponible,
+  pausada,
   agotado;
 
   static const Map<EstadoOferta, String> _valoresDb = {
     EstadoOferta.disponible: 'DISPONIBLE',
+    EstadoOferta.pausada: 'PAUSADA',
     EstadoOferta.agotado: 'AGOTADO',
   };
 
@@ -99,6 +101,8 @@ extension EstadoOfertaEtiqueta on EstadoOferta {
     switch (this) {
       case EstadoOferta.disponible:
         return 'Disponible';
+      case EstadoOferta.pausada:
+        return 'Pausada';
       case EstadoOferta.agotado:
         return 'Agotado';
     }
@@ -231,4 +235,13 @@ class OfertaLote {
   String toString() =>
       'OfertaLote(id: $id, productoId: $productoId, productorId: $productorId, '
       'precioUnitario: $precioUnitario, cantidadDisponible: $cantidadDisponible, estado: $estado)';
+}
+
+extension OfertaLoteEstadoVisual on OfertaLote {
+  String get estadoVisualTexto {
+    if (estado == EstadoOferta.pausada) return 'Pausada';
+    if (estado == EstadoOferta.agotado || cantidadDisponible <= 0) return 'Agotada';
+    if (cantidadDisponible < cantidadTotal) return 'Parcialmente Vendida';
+    return 'Activa';
+  }
 }

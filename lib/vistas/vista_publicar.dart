@@ -212,7 +212,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.handshake, color: ColoresApp.naranjaAviso, size: 32),
+                  const Icon(Icons.handshake, color: ColoresApp.verdeOscuro, size: 32),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

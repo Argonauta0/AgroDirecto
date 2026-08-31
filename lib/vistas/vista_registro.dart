@@ -153,7 +153,9 @@ class _VistaRegistroState extends State<VistaRegistro> {
                     .withValues(alpha: 0.15),
                 child: Icon(
                   esProductor ? Icons.agriculture : Icons.storefront,
-                  color: esProductor ? ColoresApp.verdePrincipal : ColoresApp.naranjaAviso,
+                  color: ColoresApp.colorAcentoAccesible(
+                    esProductor ? ColoresApp.verdePrincipal : ColoresApp.naranjaAviso,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -317,6 +319,7 @@ class _TarjetaRol extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color colorIcono = ColoresApp.colorAcentoAccesible(color);
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -332,7 +335,7 @@ class _TarjetaRol extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: color.withValues(alpha: 0.15),
-                child: Icon(icono, color: color),
+                child: Icon(icono, color: colorIcono),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -350,7 +353,7 @@ class _TarjetaRol extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: color),
+              Icon(Icons.arrow_forward_ios, size: 16, color: colorIcono),
             ],
           ),
         ),

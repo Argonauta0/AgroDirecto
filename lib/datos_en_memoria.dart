@@ -168,6 +168,30 @@ class DatosEnMemoria {
     }
   }
 
+  static void actualizarOferta(OfertaLote actualizada) {
+    final indice = ofertasLote.indexWhere((o) => o.id == actualizada.id);
+    if (indice == -1) return;
+    ofertasLote[indice] = actualizada;
+  }
+
+  static void actualizarPrecioOferta(String id, double nuevoPrecio) {
+    final oferta = obtenerOfertaLotePorId(id);
+    if (oferta == null) return;
+    actualizarOferta(oferta.copyWith(precioUnitario: nuevoPrecio));
+  }
+
+  static void alternarPausaOferta(String id) {
+    final oferta = obtenerOfertaLotePorId(id);
+    if (oferta == null || oferta.estado == EstadoOferta.agotado) return;
+    actualizarOferta(
+      oferta.copyWith(
+        estado: oferta.estado == EstadoOferta.pausada
+            ? EstadoOferta.disponible
+            : EstadoOferta.pausada,
+      ),
+    );
+  }
+
   static List<OfertaLote> get ofertasDisponibles =>
       ofertasLote.where((o) => o.estaDisponible).toList();
 
