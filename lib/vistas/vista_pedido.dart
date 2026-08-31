@@ -35,8 +35,8 @@ class _VistaPedidoState extends State<VistaPedido> {
   }
 
   void _confirmarPedido() {
-    final productor = DatosEnMemoria.obtenerProductorPorId(widget.producto.productorId);
-    final compradorActual = DatosEnMemoria.compradorActual;
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(widget.producto.productorId);
+    final compradorActual = DatosEnMemoria.usuarioActual;
 
     final pedido = Pedido(
       id: 'ped_${DateTime.now().millisecondsSinceEpoch}',
@@ -56,7 +56,7 @@ class _VistaPedidoState extends State<VistaPedido> {
         title: const Text('¡Pedido Coordinado!'),
         content: Text(
           'Tu reserva de $_cantidad ${widget.producto.tipoUnidad.toLowerCase()} de '
-          '${widget.producto.nombre} fue enviada a ${productor?.nombre ?? 'el productor'}. '
+          '${widget.producto.nombre} fue enviada a ${productor?.nombreCompleto ?? 'el productor'}. '
           'Se coordinará la entrega directamente contigo.',
           textAlign: TextAlign.center,
         ),
@@ -78,7 +78,7 @@ class _VistaPedidoState extends State<VistaPedido> {
   @override
   Widget build(BuildContext context) {
     final producto = widget.producto;
-    final productor = DatosEnMemoria.obtenerProductorPorId(producto.productorId);
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Confirmar Pedido'),
@@ -110,7 +110,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                             children: [
                               Text(producto.nombre, style: Theme.of(context).textTheme.titleLarge),
                               Text(
-                                '${productor?.nombre ?? 'Productor'} · ${productor?.comunidad ?? ''}',
+                                '${productor?.nombreCompleto ?? 'Productor'} · ${productor?.municipio ?? ''}',
                                 style: const TextStyle(color: Colors.grey, fontSize: 13),
                               ),
                             ],
@@ -145,7 +145,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Impacto directo: este trato beneficia a ${productor?.nombre ?? 'el productor'} y a la comunidad de ${productor?.comunidad ?? '-'}.',
+                              'Impacto directo: este trato beneficia a ${productor?.nombreCompleto ?? 'el productor'} y a la comunidad de ${productor?.municipio ?? '-'}.',
                               style: const TextStyle(fontSize: 12),
                             ),
                           ),
@@ -173,7 +173,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      DatosEnMemoria.compradorActual?.nombreNegocio ??
+                      DatosEnMemoria.usuarioActual?.nombreCompleto ??
                           'Sesión de comprador no encontrada',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),

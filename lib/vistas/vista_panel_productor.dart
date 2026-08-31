@@ -65,7 +65,7 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
 
   @override
   Widget build(BuildContext context) {
-    final productorActual = DatosEnMemoria.productorActual;
+    final productorActual = DatosEnMemoria.usuarioActual;
     final idProductor = productorActual?.id;
     final List<Producto> misProductos = DatosEnMemoria.productos
         .where((p) => p.productorId == idProductor)
@@ -77,7 +77,7 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          productorActual != null ? 'Hola, ${productorActual.nombre}' : 'Panel del Productor',
+          productorActual != null ? 'Hola, ${productorActual.nombreCompleto}' : 'Panel del Productor',
         ),
         actions: [
           const Padding(
@@ -171,13 +171,13 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
             )
           else
             ...otrosProductos.map((producto) {
-              final productor = DatosEnMemoria.obtenerProductorPorId(producto.productorId);
+              final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
               return TarjetaProducto(
                 producto: producto,
                 onTap: () => _verDetalle(
                   context,
                   producto,
-                  'Publicado por ${productor?.nombre ?? 'un productor'}',
+                  'Publicado por ${productor?.nombreCompleto ?? 'un productor'}',
                 ),
               );
             }),

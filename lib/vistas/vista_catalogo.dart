@@ -30,12 +30,12 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
 
   List<Producto> get _productosFiltrados {
     return DatosEnMemoria.productos.where((p) {
-      final productor = DatosEnMemoria.obtenerProductorPorId(p.productorId);
+      final productor = DatosEnMemoria.obtenerUsuarioPorId(p.productorId);
       final coincideTexto = _textoBusqueda.isEmpty ||
           p.nombre.toLowerCase().contains(_textoBusqueda.toLowerCase()) ||
-          (productor?.nombre.toLowerCase().contains(_textoBusqueda.toLowerCase()) ?? false);
+          (productor?.nombreCompleto.toLowerCase().contains(_textoBusqueda.toLowerCase()) ?? false);
       final coincideZona = _zonaSeleccionada == 'Todas' ||
-          (productor?.comunidad.toLowerCase().contains(_zonaSeleccionada.toLowerCase()) ?? false) ||
+          (productor?.municipio.toLowerCase().contains(_zonaSeleccionada.toLowerCase()) ?? false) ||
           (productor?.departamento.toLowerCase().contains(_zonaSeleccionada.toLowerCase()) ?? false);
       return coincideTexto && coincideZona;
     }).toList();
@@ -154,7 +154,7 @@ class _FichaTrazabilidad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productor = DatosEnMemoria.obtenerProductorPorId(producto.productorId);
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
     return Container(
       decoration: const BoxDecoration(
         color: ColoresApp.blancoFondo,
@@ -190,7 +190,7 @@ class _FichaTrazabilidad extends StatelessWidget {
                   children: [
                     Text(producto.nombre, style: Theme.of(context).textTheme.titleLarge),
                     Text(
-                      productor?.nombre ?? 'Productor',
+                      productor?.nombreCompleto ?? 'Productor',
                       style: const TextStyle(color: Colors.grey),
                     ),
                   ],
@@ -224,8 +224,8 @@ class _FichaTrazabilidad extends StatelessWidget {
           const SizedBox(height: 20),
           _filaFicha(
             Icons.location_on,
-            'Comunidad',
-            '${productor?.comunidad ?? '-'}, ${productor?.departamento ?? '-'}',
+            'Municipio',
+            '${productor?.municipio ?? '-'}, ${productor?.departamento ?? '-'}',
           ),
           _filaFicha(Icons.calendar_today, 'Fecha de corte', formatearFecha(producto.fechaCosecha)),
           _filaFicha(
@@ -247,7 +247,7 @@ class _FichaTrazabilidad extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Trato directo con ${productor?.nombre ?? 'el productor'}: mejores ingresos para su comunidad.',
+                    'Trato directo con ${productor?.nombreCompleto ?? 'el productor'}: mejores ingresos para su comunidad.',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),

@@ -17,7 +17,7 @@ class TarjetaProducto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productor = DatosEnMemoria.obtenerProductorPorId(producto.productorId);
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
@@ -49,7 +49,7 @@ class TarjetaProducto extends StatelessWidget {
                             const SizedBox(width: 2),
                             Expanded(
                               child: Text(
-                                '${productor?.nombre ?? 'Productor'} · ${productor?.comunidad ?? ''}',
+                                '${productor?.nombreCompleto ?? 'Productor'} · ${productor?.municipio ?? ''}',
                                 style: const TextStyle(fontSize: 12, color: Colors.grey),
                                 overflow: TextOverflow.ellipsis,
                               ),

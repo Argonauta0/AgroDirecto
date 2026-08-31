@@ -45,7 +45,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
   void _publicarLote() {
     if (!_formKey.currentState!.validate()) return;
 
-    final productorActual = DatosEnMemoria.productorActual;
+    final productorActual = DatosEnMemoria.usuarioActual;
     if (productorActual == null) return;
 
     final cultivo = _controladorCultivo.text.trim();
@@ -83,7 +83,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
 
   @override
   Widget build(BuildContext context) {
-    final productorActual = DatosEnMemoria.productorActual;
+    final productorActual = DatosEnMemoria.usuarioActual;
 
     return Scaffold(
       appBar: AppBar(
@@ -120,7 +120,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
                   Expanded(
                     child: Text(
                       productorActual != null
-                          ? '${productorActual.nombre} • ${productorActual.comunidad}, ${productorActual.departamento}'
+                          ? '${productorActual.nombreCompleto} • ${productorActual.municipio}, ${productorActual.departamento}'
                           : 'Sesión de productor no encontrada',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),

@@ -42,16 +42,16 @@ class _VistaLoginState extends State<VistaLogin> {
   }
 
   void _entrarComoProductor() {
-    final primerProductor = DatosEnMemoria.productores.first;
-    DatosEnMemoria.iniciarSesionComoProductor(primerProductor.id);
+    final primerProductor = DatosEnMemoria.usuarios.firstWhere((u) => u.esProductor);
+    DatosEnMemoria.iniciarSesion(primerProductor.id);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const VistaPanelProductor()),
     );
   }
 
   void _entrarComoComprador() {
-    final primerComprador = DatosEnMemoria.compradores.first;
-    DatosEnMemoria.iniciarSesionComoComprador(primerComprador.id);
+    final primerComprador = DatosEnMemoria.usuarios.firstWhere((u) => u.esComprador);
+    DatosEnMemoria.iniciarSesion(primerComprador.id);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const VistaCatalogo()),
     );

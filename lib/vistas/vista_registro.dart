@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_comprador.dart';
-import '../modelos/modelo_productor.dart';
+import '../modelos/modelo_usuario.dart';
 import '../tema_app.dart';
 import 'vista_catalogo.dart';
 import 'vista_panel_productor.dart';
@@ -21,11 +20,10 @@ class _VistaRegistroState extends State<VistaRegistro> {
 
   final TextEditingController _controladorNombre = TextEditingController();
   final TextEditingController _controladorDepartamento = TextEditingController();
-  final TextEditingController _controladorComunidad = TextEditingController();
+  final TextEditingController _controladorMunicipio = TextEditingController();
+  final TextEditingController _controladorDireccion = TextEditingController();
   final TextEditingController _controladorTelefono = TextEditingController();
 
-  final TextEditingController _controladorNombreNegocio = TextEditingController();
-  final TextEditingController _controladorUbicacion = TextEditingController();
   final List<String> _tiposDeNegocio = const [
     'Supermercado',
     'Restaurante',
@@ -39,10 +37,9 @@ class _VistaRegistroState extends State<VistaRegistro> {
   void dispose() {
     _controladorNombre.dispose();
     _controladorDepartamento.dispose();
-    _controladorComunidad.dispose();
+    _controladorMunicipio.dispose();
+    _controladorDireccion.dispose();
     _controladorTelefono.dispose();
-    _controladorNombreNegocio.dispose();
-    _controladorUbicacion.dispose();
     super.dispose();
   }
 
@@ -53,29 +50,28 @@ class _VistaRegistroState extends State<VistaRegistro> {
   void _registrar() {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_rolSeleccionado == _RolRegistro.productor) {
-      final productor = Productor(
-        id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
-        nombre: _controladorNombre.text.trim(),
-        departamento: _controladorDepartamento.text.trim(),
-        comunidad: _controladorComunidad.text.trim(),
-        telefono: _controladorTelefono.text.trim(),
-      );
-      DatosEnMemoria.agregarProductor(productor);
-      DatosEnMemoria.iniciarSesionComoProductor(productor.id);
+    final esProductor = _rolSeleccionado == _RolRegistro.productor;
+    final direccionExacta = esProductor
+        ? _controladorDireccion.text.trim()
+        : '$_tipoNegocioSeleccionado, ${_controladorDireccion.text.trim()}';
+
+    final usuario = Usuario(
+      id: '${esProductor ? 'prod' : 'comp'}_${DateTime.now().millisecondsSinceEpoch}',
+      nombreCompleto: _controladorNombre.text.trim(),
+      telefono: _controladorTelefono.text.trim(),
+      tipoPerfil: esProductor ? TipoPerfil.productor : TipoPerfil.comprador,
+      departamento: _controladorDepartamento.text.trim(),
+      municipio: _controladorMunicipio.text.trim(),
+      direccionExacta: direccionExacta,
+    );
+    DatosEnMemoria.agregarUsuario(usuario);
+    DatosEnMemoria.iniciarSesion(usuario.id);
+
+    if (esProductor) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const VistaPanelProductor()),
       );
     } else {
-      final comprador = Comprador(
-        id: 'comp_${DateTime.now().millisecondsSinceEpoch}',
-        nombreNegocio: _controladorNombreNegocio.text.trim(),
-        tipoNegocio: _tipoNegocioSeleccionado,
-        ubicacion: _controladorUbicacion.text.trim(),
-        telefono: _controladorTelefono.text.trim(),
-      );
-      DatosEnMemoria.agregarComprador(comprador);
-      DatosEnMemoria.iniciarSesionComoComprador(comprador.id);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const VistaCatalogo()),
       );
@@ -205,13 +201,23 @@ class _VistaRegistroState extends State<VistaRegistro> {
       ),
       const SizedBox(height: 12),
       TextFormField(
-        controller: _controladorComunidad,
+        controller: _controladorMunicipio,
         decoration: InputDecoration(
-          labelText: 'Comunidad',
+          labelText: 'Municipio',
+          prefixIcon: const Icon(Icons.location_city),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu municipio' : null,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _controladorDireccion,
+        decoration: InputDecoration(
+          labelText: 'Finca o comunidad',
           prefixIcon: const Icon(Icons.location_on),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu comunidad' : null,
+        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu finca o comunidad' : null,
       ),
       const SizedBox(height: 12),
       TextFormField(
@@ -230,7 +236,7 @@ class _VistaRegistroState extends State<VistaRegistro> {
   List<Widget> _camposComprador() {
     return [
       TextFormField(
-        controller: _controladorNombreNegocio,
+        controller: _controladorNombre,
         decoration: InputDecoration(
           labelText: 'Nombre del negocio',
           prefixIcon: const Icon(Icons.storefront),
@@ -251,13 +257,33 @@ class _VistaRegistroState extends State<VistaRegistro> {
       ),
       const SizedBox(height: 12),
       TextFormField(
-        controller: _controladorUbicacion,
+        controller: _controladorDepartamento,
         decoration: InputDecoration(
-          labelText: 'Ubicación',
+          labelText: 'Departamento',
+          prefixIcon: const Icon(Icons.map),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa el departamento' : null,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _controladorMunicipio,
+        decoration: InputDecoration(
+          labelText: 'Municipio',
+          prefixIcon: const Icon(Icons.location_city),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa el municipio' : null,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _controladorDireccion,
+        decoration: InputDecoration(
+          labelText: 'Dirección exacta (bodega)',
           prefixIcon: const Icon(Icons.location_on),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa la ubicación' : null,
+        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa la dirección exacta' : null,
       ),
       const SizedBox(height: 12),
       TextFormField(
