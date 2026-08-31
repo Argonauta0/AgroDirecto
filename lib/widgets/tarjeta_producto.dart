@@ -51,6 +51,7 @@ class TarjetaProducto extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
                     backgroundColor: ColoresApp.verdeClaro.withValues(alpha: 0.3),
@@ -65,22 +66,17 @@ class TarjetaProducto extends StatelessWidget {
                           producto?.nombre ?? 'Producto',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                            const SizedBox(width: 2),
-                            Expanded(
-                              child: Text(
-                                '${productor?.nombreCompleto ?? 'Productor'} · ${productor?.municipio ?? ''}',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                        if (producto?.categoria != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            producto!.categoria,
+                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                        ],
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -98,6 +94,41 @@ class TarjetaProducto extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              // Origen del lote: quién lo produce y de dónde viene.
+              Row(
+                children: [
+                  const Icon(Icons.person_outline, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      productor?.nombreCompleto ?? 'Productor',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, size: 14, color: ColoresApp.verdeOscuro),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      productor != null
+                          ? '${productor.municipio}, ${productor.departamento}'
+                          : 'Ubicación no disponible',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: ColoresApp.verdeOscuro,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               IndicadorInventario(
                 cantidadDisponible: oferta.cantidadDisponible,
@@ -106,24 +137,42 @@ class TarjetaProducto extends StatelessWidget {
                 compacto: true,
               ),
               const SizedBox(height: 12),
+              Divider(height: 1, color: Colors.grey.shade200),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: ColoresApp.naranjaAviso,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      'C\$${oferta.precioUnitario.toStringAsFixed(0)} / ${oferta.unidadMedida.etiqueta}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: Colors.black87,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.sell, size: 14, color: Colors.black87),
+                        const SizedBox(width: 4),
+                        Text(
+                          'C\$${oferta.precioUnitario.toStringAsFixed(0)} / ${oferta.unidadMedida.etiqueta}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
+                  Icon(Icons.local_shipping_outlined, size: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      oferta.modalidadLogistica.etiqueta,
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   if (onEliminar != null)
                     TextButton.icon(
                       onPressed: onEliminar,

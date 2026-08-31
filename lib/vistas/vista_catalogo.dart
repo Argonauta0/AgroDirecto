@@ -274,141 +274,217 @@ class _FichaTrazabilidad extends StatelessWidget {
 
   const _FichaTrazabilidad({required this.oferta});
 
+  Color _fondoEstado() {
+    if (oferta.estado == EstadoOferta.pausada) return ColoresApp.naranjaAviso;
+    if (oferta.estado == EstadoOferta.agotado) return Colors.grey.shade300;
+    if (oferta.cantidadDisponible < oferta.cantidadTotal) return ColoresApp.amarilloDestacado;
+    return ColoresApp.verdeClaro.withValues(alpha: 0.25);
+  }
+
+  Color _textoEstado() {
+    if (oferta.estado == EstadoOferta.agotado) return Colors.black54;
+    if (oferta.estado == EstadoOferta.disponible &&
+        oferta.cantidadDisponible >= oferta.cantidadTotal) {
+      return ColoresApp.verdeOscuro;
+    }
+    return ColoresApp.colorTextoSobre(_fondoEstado());
+  }
+
   @override
   Widget build(BuildContext context) {
     final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
     final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
+    final double valorTotalLote = oferta.precioUnitario * oferta.cantidadTotal;
+
     return Container(
       decoration: const BoxDecoration(
         color: ColoresApp.blancoFondo,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: ColoresApp.verdeClaro.withValues(alpha: 0.3),
-                child: const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 28),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(producto?.nombre ?? 'Producto', style: Theme.of(context).textTheme.titleLarge),
-                    Text(
-                      productor?.nombreCompleto ?? 'Productor',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: ColoresApp.verdePrincipal.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.local_shipping, size: 14, color: ColoresApp.verdePrincipal),
-                    const SizedBox(width: 4),
-                    Text(
-                      oferta.modalidadLogistica.etiqueta,
-                      style: const TextStyle(
-                        color: ColoresApp.verdePrincipal,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _filaFicha(
-            Icons.location_on,
-            'Municipio',
-            '${productor?.municipio ?? '-'}, ${productor?.departamento ?? '-'}',
-          ),
-          _filaFicha(
-            Icons.calendar_today,
-            'Fecha de corte',
-            oferta.fechaCosecha != null ? formatearFecha(oferta.fechaCosecha!) : 'No especificada',
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: const [
-              Icon(Icons.inventory_2, size: 18, color: ColoresApp.verdeOscuro),
-              SizedBox(width: 10),
-              Text('Control de inventario', style: TextStyle(fontWeight: FontWeight.w600)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          IndicadorInventario(
-            cantidadDisponible: oferta.cantidadDisponible,
-            cantidadTotal: oferta.cantidadTotal,
-            unidadEtiqueta: oferta.unidadMedida.etiqueta.toLowerCase(),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: ColoresApp.amarilloDestacado.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            const SizedBox(height: 16),
+            // Encabezado: identidad del lote y su estado actual.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.eco, color: ColoresApp.verdeOscuro),
-                const SizedBox(width: 8),
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: ColoresApp.verdeClaro.withValues(alpha: 0.3),
+                  child: const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 28),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        producto?.nombre ?? 'Producto',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      if (producto?.categoria != null)
+                        Text(
+                          producto!.categoria,
+                          style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _fondoEstado(),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Text(
-                    'Trato directo con ${productor?.nombreCompleto ?? 'el productor'}: mejores ingresos para su comunidad.',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    oferta.estadoVisualTexto,
+                    style: TextStyle(
+                      color: _textoEstado(),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => VistaPedido(
-                      oferta: oferta,
-                      cantidadInicial: 1,
+            const SizedBox(height: 16),
+            // Precio: lo primero que necesita ver un comprador para decidir.
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: ColoresApp.naranjaAviso,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.sell, color: Colors.black87),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'C\$${oferta.precioUnitario.toStringAsFixed(0)} '
+                          'por ${oferta.unidadMedida.etiqueta.toLowerCase()}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          'Valor total del lote: C\$${valorTotalLote.toStringAsFixed(0)} '
+                          '(${oferta.cantidadTotal} ${oferta.unidadMedida.etiqueta.toLowerCase()}s)',
+                          style: const TextStyle(fontSize: 12, color: Colors.black87),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
-              icon: const Icon(Icons.eco),
-              label: const Text('Reservar Cosecha'),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Text(
+              'Datos del productor',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            _filaFicha(Icons.person, 'Nombre', productor?.nombreCompleto ?? 'No disponible'),
+            _filaFicha(Icons.phone, 'Teléfono', productor?.telefono ?? 'No disponible'),
+            _filaFicha(
+              Icons.location_on,
+              'Origen',
+              productor != null
+                  ? (productor.direccionExacta.isNotEmpty
+                      ? '${productor.direccionExacta}, ${productor.municipio}, ${productor.departamento}'
+                      : '${productor.municipio}, ${productor.departamento}')
+                  : 'No disponible',
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Detalles del lote',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            _filaFicha(
+              Icons.calendar_today,
+              'Fecha de corte',
+              oferta.fechaCosecha != null ? formatearFecha(oferta.fechaCosecha!) : 'No especificada',
+            ),
+            _filaFicha(Icons.local_shipping, 'Modalidad de entrega', oferta.modalidadLogistica.etiqueta),
+            const SizedBox(height: 12),
+            Row(
+              children: const [
+                Icon(Icons.inventory_2, size: 18, color: ColoresApp.verdeOscuro),
+                SizedBox(width: 10),
+                Text('Control de inventario', style: TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            IndicadorInventario(
+              cantidadDisponible: oferta.cantidadDisponible,
+              cantidadTotal: oferta.cantidadTotal,
+              unidadEtiqueta: oferta.unidadMedida.etiqueta.toLowerCase(),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ColoresApp.amarilloDestacado.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.eco, color: ColoresApp.verdeOscuro),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Trato directo con ${productor?.nombreCompleto ?? 'el productor'}: mejores ingresos para su comunidad.',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: oferta.estaDisponible
+                    ? () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => VistaPedido(
+                              oferta: oferta,
+                              cantidadInicial: 1,
+                            ),
+                          ),
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.eco),
+                label: Text(oferta.estaDisponible ? 'Reservar Cosecha' : 'No disponible'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -417,6 +493,7 @@ class _FichaTrazabilidad extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icono, size: 18, color: ColoresApp.verdeOscuro),
           const SizedBox(width: 10),
