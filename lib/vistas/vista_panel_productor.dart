@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
-import '../widgets/indicador_modo_rural.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'vista_editar_oferta.dart';
 import 'vista_login.dart';
@@ -91,10 +90,6 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
           productorActual != null ? 'Hola, ${productorActual.nombreCompleto}' : 'Panel del Productor',
         ),
         actions: [
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Center(child: IndicadorModoRural()),
-          ),
           IconButton(
             onPressed: () => _cerrarSesion(context),
             icon: const Icon(Icons.logout),

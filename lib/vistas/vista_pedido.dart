@@ -4,7 +4,7 @@ import '../modelos/modelo_oferta_lote.dart';
 import '../modelos/modelo_pedido.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
-import '../widgets/indicador_modo_rural.dart';
+import '../widgets/indicador_inventario.dart';
 
 class VistaPedido extends StatefulWidget {
   final OfertaLote oferta;
@@ -105,12 +105,6 @@ class _VistaPedidoState extends State<VistaPedido> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Confirmar Pedido'),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Center(child: IndicadorModoRural()),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -226,6 +220,13 @@ class _VistaPedidoState extends State<VistaPedido> {
             const SizedBox(height: 20),
             Text('Volumen a reservar', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
+            IndicadorInventario(
+              cantidadDisponible: oferta.cantidadDisponible,
+              cantidadTotal: oferta.cantidadTotal,
+              unidadEtiqueta: oferta.unidadMedida.etiqueta.toLowerCase(),
+              compacto: true,
+            ),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

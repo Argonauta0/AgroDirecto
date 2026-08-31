@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
+import 'indicador_inventario.dart';
 
 class TarjetaProducto extends StatelessWidget {
   final OfertaLote oferta;
@@ -96,6 +97,13 @@ class TarjetaProducto extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              IndicadorInventario(
+                cantidadDisponible: oferta.cantidadDisponible,
+                cantidadTotal: oferta.cantidadTotal,
+                unidadEtiqueta: oferta.unidadMedida.etiqueta.toLowerCase(),
+                compacto: true,
               ),
               const SizedBox(height: 12),
               Row(

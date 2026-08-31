@@ -3,7 +3,6 @@ import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_lote.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
-import '../widgets/indicador_modo_rural.dart';
 import 'vista_login.dart';
 
 class VistaPublicar extends StatefulWidget {
@@ -88,10 +87,6 @@ class _VistaPublicarState extends State<VistaPublicar> {
       appBar: AppBar(
         title: const Text('Publicar Cosecha'),
         actions: [
-          const Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Center(child: IndicadorModoRural()),
-          ),
           IconButton(
             onPressed: _cerrarSesion,
             icon: const Icon(Icons.logout),

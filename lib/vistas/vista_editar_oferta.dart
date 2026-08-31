@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
-import '../widgets/indicador_modo_rural.dart';
+import '../widgets/indicador_inventario.dart';
 
 class VistaEditarOferta extends StatefulWidget {
   final String ofertaId;
@@ -117,12 +117,6 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar oferta'),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Center(child: IndicadorModoRural()),
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
@@ -132,40 +126,46 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 32),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
+                      Row(
+                        children: [
+                          const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 32),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
                               producto?.nombre ?? 'Producto',
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            Text(
-                              '${oferta.cantidadDisponible} de ${oferta.cantidadTotal} '
-                              '${oferta.unidadMedida.etiqueta}(s) disponibles',
-                              style: const TextStyle(color: Colors.grey, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _fondoEstado(oferta),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          oferta.estadoVisualTexto,
-                          style: TextStyle(
-                            color: _textoEstado(oferta),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
                           ),
-                        ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _fondoEstado(oferta),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              oferta.estadoVisualTexto,
+                              style: TextStyle(
+                                color: _textoEstado(oferta),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Control de inventario',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      IndicadorInventario(
+                        cantidadDisponible: oferta.cantidadDisponible,
+                        cantidadTotal: oferta.cantidadTotal,
+                        unidadEtiqueta: oferta.unidadMedida.etiqueta.toLowerCase(),
                       ),
                     ],
                   ),

@@ -4,7 +4,7 @@ import '../modelos/modelo_oferta_lote.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
-import '../widgets/indicador_modo_rural.dart';
+import '../widgets/indicador_inventario.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'vista_login.dart';
 import 'vista_pedido.dart';
@@ -176,10 +176,6 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
       appBar: AppBar(
         title: const Text('AgroDirecto'),
         actions: [
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Center(child: IndicadorModoRural()),
-          ),
           IconButton(
             onPressed: _abrirCanasta,
             icon: const Icon(Icons.shopping_basket),
@@ -358,10 +354,19 @@ class _FichaTrazabilidad extends StatelessWidget {
             'Fecha de corte',
             oferta.fechaCosecha != null ? formatearFecha(oferta.fechaCosecha!) : 'No especificada',
           ),
-          _filaFicha(
-            Icons.inventory_2,
-            'Disponible',
-            '${oferta.cantidadDisponible} ${oferta.unidadMedida.etiqueta}',
+          const SizedBox(height: 4),
+          Row(
+            children: const [
+              Icon(Icons.inventory_2, size: 18, color: ColoresApp.verdeOscuro),
+              SizedBox(width: 10),
+              Text('Control de inventario', style: TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          IndicadorInventario(
+            cantidadDisponible: oferta.cantidadDisponible,
+            cantidadTotal: oferta.cantidadTotal,
+            unidadEtiqueta: oferta.unidadMedida.etiqueta.toLowerCase(),
           ),
           const SizedBox(height: 12),
           Container(
