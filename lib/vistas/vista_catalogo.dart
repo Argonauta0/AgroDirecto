@@ -236,19 +236,49 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
                 ),
               ),
             ),
-          const SizedBox(height: 4),
+          if (_ofertasFiltradas.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '${_ofertasFiltradas.length} cosecha${_ofertasFiltradas.length == 1 ? '' : 's'} disponible${_ofertasFiltradas.length == 1 ? '' : 's'}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ),
           Expanded(
             child: _ofertasFiltradas.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('No hay lotes disponibles con estos filtros.'),
-                        if (_hayFiltrosActivos) ...[
-                          const SizedBox(height: 8),
-                          TextButton(onPressed: _limpiarFiltros, child: const Text('Limpiar filtros')),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search_off, size: 56, color: Colors.grey.shade400),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No hay cosechas disponibles',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _hayFiltrosActivos
+                                ? 'Ningún lote coincide con los filtros aplicados.'
+                                : 'Todavía no hay productores publicando cosechas.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          if (_hayFiltrosActivos) ...[
+                            const SizedBox(height: 12),
+                            TextButton.icon(
+                              onPressed: _limpiarFiltros,
+                              icon: const Icon(Icons.clear, size: 16),
+                              label: const Text('Limpiar filtros'),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   )
                 : ListView.builder(

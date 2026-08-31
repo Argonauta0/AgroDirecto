@@ -118,6 +118,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 32),
                         const SizedBox(width: 12),
@@ -130,10 +131,48 @@ class _VistaPedidoState extends State<VistaPedido> {
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                               Text(
-                                '${productor?.nombreCompleto ?? 'Productor'} · ${productor?.municipio ?? ''}',
+                                productor?.nombreCompleto ?? 'Productor',
                                 style: const TextStyle(color: Colors.grey, fontSize: 13),
                               ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.location_on, size: 13, color: ColoresApp.verdeOscuro),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      productor != null
+                                          ? '${productor.municipio}, ${productor.departamento}'
+                                          : 'Ubicación no disponible',
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: ColoresApp.verdeOscuro,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: ColoresApp.naranjaAviso,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'C\$${oferta.precioUnitario.toStringAsFixed(0)}\n/ ${oferta.unidadMedida.etiqueta}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              height: 1.2,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
                       ],
@@ -167,7 +206,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Impacto directo: este trato beneficia a ${productor?.nombreCompleto ?? 'el productor'} y a la comunidad de ${productor?.municipio ?? '-'}.',
+                              'Impacto directo: este trato beneficia a ${productor?.nombreCompleto ?? 'el productor'} y a la comunidad de ${productor != null ? '${productor.municipio}, ${productor.departamento}' : '-'}.',
                               style: const TextStyle(fontSize: 12),
                             ),
                           ),
@@ -249,17 +288,31 @@ class _VistaPedidoState extends State<VistaPedido> {
               color: ColoresApp.verdeOscuro,
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Total a pagar', style: TextStyle(color: Colors.white, fontSize: 16)),
                     Text(
-                      'C\$${_total.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      '$_cantidad ${oferta.unidadMedida.etiqueta} × '
+                      'C\$${oferta.precioUnitario.toStringAsFixed(0)}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total a pagar',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                        Text(
+                          'C\$${_total.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
