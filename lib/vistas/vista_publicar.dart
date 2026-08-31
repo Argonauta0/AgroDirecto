@@ -3,6 +3,7 @@ import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_lote.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
+import '../widgets/resumen_liquidacion.dart';
 import 'vista_login.dart';
 
 class VistaPublicar extends StatefulWidget {
@@ -23,6 +24,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
   final TextEditingController _controladorPrecio = TextEditingController();
 
   double get _precioIngresado => double.tryParse(_controladorPrecio.text) ?? 0;
+  int get _cantidadIngresada => int.tryParse(_controladorCantidad.text) ?? 0;
   double get _precioIntermediarioEstimado => _precioIngresado / 1.35;
   double get _gananciaExtra => _precioIngresado - _precioIntermediarioEstimado;
 
@@ -175,6 +177,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
                 prefixIcon: const Icon(Icons.inventory_2),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
+              onChanged: (_) => setState(() {}),
               validator: (v) {
                 final n = int.tryParse(v ?? '');
                 if (n == null || n <= 0) return 'Ingresa una cantidad válida';
@@ -198,6 +201,13 @@ class _VistaPublicarState extends State<VistaPublicar> {
               },
             ),
             const SizedBox(height: 20),
+            if (_cantidadIngresada > 0 && _precioIngresado > 0)
+              ResumenLiquidacion(
+                cantidad: _cantidadIngresada,
+                precioUnitario: _precioIngresado,
+                unidadEtiqueta: _unidadSeleccionada.etiqueta.toLowerCase(),
+              ),
+            if (_cantidadIngresada > 0 && _precioIngresado > 0) const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

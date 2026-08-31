@@ -3,6 +3,7 @@ import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_inventario.dart';
+import '../widgets/resumen_liquidacion.dart';
 
 class VistaEditarOferta extends StatefulWidget {
   final String ofertaId;
@@ -18,6 +19,9 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
   late final TextEditingController _controladorPrecio;
 
   OfertaLote? get _oferta => DatosEnMemoria.obtenerOfertaLotePorId(widget.ofertaId);
+
+  double get _precioEnEdicion =>
+      double.tryParse(_controladorPrecio.text) ?? _oferta?.precioUnitario ?? 0;
 
   @override
   void initState() {
@@ -182,6 +186,7 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
                   prefixIcon: const Icon(Icons.attach_money),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                onChanged: (_) => setState(() {}),
                 validator: (v) {
                   final n = double.tryParse(v ?? '');
                   if (n == null || n <= 0) return 'Ingresa un precio válido';
@@ -189,6 +194,14 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
                 },
               ),
               const SizedBox(height: 12),
+              if (oferta.cantidadDisponible > 0 && _precioEnEdicion > 0)
+                ResumenLiquidacion(
+                  cantidad: oferta.cantidadDisponible,
+                  precioUnitario: _precioEnEdicion,
+                  unidadEtiqueta: oferta.unidadMedida.etiqueta.toLowerCase(),
+                  titulo: 'Liquidación estimada del inventario restante',
+                ),
+              if (oferta.cantidadDisponible > 0 && _precioEnEdicion > 0) const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
