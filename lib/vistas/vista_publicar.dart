@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
+import '../modelos/modelo_oferta_lote.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
@@ -15,18 +16,9 @@ class VistaPublicar extends StatefulWidget {
 class _VistaPublicarState extends State<VistaPublicar> {
   final _formKey = GlobalKey<FormState>();
 
-  final List<String> _cultivosSugeridos = const [
-    'Piña Monte Lirio',
-    'Limón Tahití',
-    'Naranja de Jugo',
-    'Chiltoma Fresca',
-    'Plátano',
-    'Frijol Rojo',
-  ];
-  final List<String> _unidades = const ['Docenas', 'Quintales', 'Cien'];
-
-  String _unidadSeleccionada = 'Docenas';
-  late TextEditingController _controladorCultivo;
+  Producto? _productoSeleccionado;
+  UnidadMedida _unidadSeleccionada = UnidadMedida.quintal;
+  ModalidadLogisticaOferta _modalidadSeleccionada = ModalidadLogisticaOferta.todas;
 
   final TextEditingController _controladorCantidad = TextEditingController();
   final TextEditingController _controladorPrecio = TextEditingController();
@@ -34,6 +26,12 @@ class _VistaPublicarState extends State<VistaPublicar> {
   double get _precioIngresado => double.tryParse(_controladorPrecio.text) ?? 0;
   double get _precioIntermediarioEstimado => _precioIngresado / 1.35;
   double get _gananciaExtra => _precioIngresado - _precioIntermediarioEstimado;
+
+  @override
+  void initState() {
+    super.initState();
+    _productoSeleccionado = DatosEnMemoria.catalogoProductos.first;
+  }
 
   @override
   void dispose() {
@@ -46,27 +44,28 @@ class _VistaPublicarState extends State<VistaPublicar> {
     if (!_formKey.currentState!.validate()) return;
 
     final productorActual = DatosEnMemoria.usuarioActual;
-    if (productorActual == null) return;
+    final producto = _productoSeleccionado;
+    if (productorActual == null || producto == null) return;
 
-    final cultivo = _controladorCultivo.text.trim();
+    final cantidad = int.parse(_controladorCantidad.text);
 
-    final producto = Producto(
-      id: 'p_${DateTime.now().millisecondsSinceEpoch}',
-      nombre: cultivo,
+    final oferta = OfertaLote(
+      id: 'of_${DateTime.now().millisecondsSinceEpoch}',
       productorId: productorActual.id,
-      precioPorUnidad: double.parse(_controladorPrecio.text),
-      tipoUnidad: _unidadSeleccionada,
-      cantidadDisponible: int.parse(_controladorCantidad.text),
-      icono: Icons.eco,
-      esTratoDirecto: true,
+      productoId: producto.id,
+      precioUnitario: double.parse(_controladorPrecio.text),
+      unidadMedida: _unidadSeleccionada,
+      cantidadTotal: cantidad,
+      cantidadDisponible: cantidad,
+      modalidadLogistica: _modalidadSeleccionada,
       fechaCosecha: DateTime.now(),
     );
 
-    DatosEnMemoria.agregarProducto(producto);
+    DatosEnMemoria.agregarOfertaLote(oferta);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Lote de $cultivo publicado con éxito'),
+        content: Text('Lote de ${producto.nombre} publicado con éxito'),
         backgroundColor: ColoresApp.verdePrincipal,
       ),
     );
@@ -131,40 +130,44 @@ class _VistaPublicarState extends State<VistaPublicar> {
             const SizedBox(height: 24),
             Text('¿Qué vas a vender?', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            Autocomplete<String>(
-              optionsBuilder: (TextEditingValue textEditingValue) {
-                if (textEditingValue.text.isEmpty) return _cultivosSugeridos;
-                return _cultivosSugeridos.where(
-                  (c) => c.toLowerCase().contains(textEditingValue.text.toLowerCase()),
-                );
-              },
-              fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                _controladorCultivo = controller;
-                return TextFormField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  decoration: InputDecoration(
-                    labelText: 'Cultivo',
-                    hintText: 'Ej. Piña Monte Lirio',
-                    prefixIcon: const Icon(Icons.eco),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa el cultivo' : null,
-                );
-              },
+            DropdownButtonFormField<Producto>(
+              initialValue: _productoSeleccionado,
+              decoration: InputDecoration(
+                labelText: 'Cultivo del catálogo',
+                prefixIcon: const Icon(Icons.eco),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              items: DatosEnMemoria.catalogoProductos
+                  .map((p) => DropdownMenuItem(value: p, child: Text(p.nombre)))
+                  .toList(),
+              onChanged: (v) => setState(() => _productoSeleccionado = v),
+              validator: (v) => v == null ? 'Selecciona un cultivo' : null,
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
+            DropdownButtonFormField<UnidadMedida>(
               initialValue: _unidadSeleccionada,
               decoration: InputDecoration(
                 labelText: 'Unidad de medida',
                 prefixIcon: const Icon(Icons.scale),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              items: _unidades
-                  .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+              items: UnidadMedida.values
+                  .map((u) => DropdownMenuItem(value: u, child: Text(u.etiqueta)))
                   .toList(),
               onChanged: (v) => setState(() => _unidadSeleccionada = v ?? _unidadSeleccionada),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<ModalidadLogisticaOferta>(
+              initialValue: _modalidadSeleccionada,
+              decoration: InputDecoration(
+                labelText: 'Modalidad de entrega',
+                prefixIcon: const Icon(Icons.local_shipping),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              items: ModalidadLogisticaOferta.values
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m.etiqueta)))
+                  .toList(),
+              onChanged: (v) => setState(() => _modalidadSeleccionada = v ?? _modalidadSeleccionada),
             ),
             const SizedBox(height: 24),
             Text('Cantidad y precio', style: Theme.of(context).textTheme.titleMedium),
@@ -173,7 +176,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
               controller: _controladorCantidad,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Cantidad disponible',
+                labelText: 'Cantidad total',
                 prefixIcon: const Icon(Icons.inventory_2),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -188,7 +191,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
               controller: _controladorPrecio,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                labelText: 'Precio por $_unidadSeleccionada (C\$)',
+                labelText: 'Precio por ${_unidadSeleccionada.etiqueta} (C\$)',
                 prefixIcon: const Icon(Icons.attach_money),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),

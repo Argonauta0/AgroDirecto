@@ -16,6 +16,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.shopping_basket), findsOneWidget);
-    expect(find.text('Piña Monte Lirio'), findsOneWidget);
+    expect(find.text('Limón Criollo'), findsOneWidget);
   });
 }

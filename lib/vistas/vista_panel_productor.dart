@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_producto.dart';
+import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_modo_rural.dart';
 import '../widgets/tarjeta_producto.dart';
@@ -30,15 +30,18 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
     setState(() {});
   }
 
-  void _verDetalle(BuildContext context, Producto producto, String etiqueta) {
+  void _verDetalle(BuildContext context, OfertaLote oferta, String etiqueta) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(etiqueta)));
   }
 
-  Future<void> _confirmarEliminar(BuildContext context, Producto producto) async {
+  Future<void> _confirmarEliminar(BuildContext context, OfertaLote oferta) async {
+    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
+    final nombre = producto?.nombre ?? 'este lote';
+
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('¿Eliminar ${producto.nombre}?'),
+        title: Text('¿Eliminar $nombre?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -54,12 +57,12 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
 
     if (confirmar != true) return;
 
-    DatosEnMemoria.eliminarProducto(producto.id);
+    DatosEnMemoria.eliminarOfertaLote(oferta.id);
     setState(() {});
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"${producto.nombre}" fue eliminado.')),
+      SnackBar(content: Text('"$nombre" fue eliminado.')),
     );
   }
 
@@ -67,11 +70,11 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
   Widget build(BuildContext context) {
     final productorActual = DatosEnMemoria.usuarioActual;
     final idProductor = productorActual?.id;
-    final List<Producto> misProductos = DatosEnMemoria.productos
-        .where((p) => p.productorId == idProductor)
+    final List<OfertaLote> misOfertas = DatosEnMemoria.ofertasLote
+        .where((o) => o.productorId == idProductor)
         .toList();
-    final List<Producto> otrosProductos = DatosEnMemoria.productos
-        .where((p) => p.productorId != idProductor)
+    final List<OfertaLote> otrasOfertas = DatosEnMemoria.ofertasLote
+        .where((o) => o.productorId != idProductor)
         .toList();
 
     return Scaffold(
@@ -121,21 +124,21 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  misProductos.isEmpty
+                  misOfertas.isEmpty
                       ? 'Aún no has publicado ninguna cosecha.'
-                      : 'Tienes ${misProductos.length} lote(s) publicado(s).',
+                      : 'Tienes ${misOfertas.length} lote(s) publicado(s).',
                   style: const TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 12),
-                ...misProductos.map(
-                  (producto) => TarjetaProducto(
-                    producto: producto,
+                ...misOfertas.map(
+                  (oferta) => TarjetaProducto(
+                    oferta: oferta,
                     onTap: () => _verDetalle(
                       context,
-                      producto,
-                      '${producto.cantidadDisponible} ${producto.tipoUnidad} disponibles',
+                      oferta,
+                      '${oferta.cantidadDisponible} ${oferta.unidadMedida.etiqueta} disponibles',
                     ),
-                    onEliminar: () => _confirmarEliminar(context, producto),
+                    onEliminar: () => _confirmarEliminar(context, oferta),
                   ),
                 ),
               ],
@@ -164,19 +167,19 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
             ),
           ),
           const SizedBox(height: 4),
-          if (otrosProductos.isEmpty)
+          if (otrasOfertas.isEmpty)
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text('No hay lotes de otros productores todavía.'),
             )
           else
-            ...otrosProductos.map((producto) {
-              final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
+            ...otrasOfertas.map((oferta) {
+              final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
               return TarjetaProducto(
-                producto: producto,
+                oferta: oferta,
                 onTap: () => _verDetalle(
                   context,
-                  producto,
+                  oferta,
                   'Publicado por ${productor?.nombreCompleto ?? 'un productor'}',
                 ),
               );

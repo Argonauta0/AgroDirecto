@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_producto.dart';
+import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
 
 class TarjetaProducto extends StatelessWidget {
-  final Producto producto;
+  final OfertaLote oferta;
   final VoidCallback onTap;
   final VoidCallback? onEliminar;
 
   const TarjetaProducto({
     super.key,
-    required this.producto,
+    required this.oferta,
     required this.onTap,
     this.onEliminar,
   });
 
   @override
   Widget build(BuildContext context) {
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
+    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
@@ -32,7 +33,7 @@ class TarjetaProducto extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     backgroundColor: ColoresApp.verdeClaro.withValues(alpha: 0.3),
-                    child: Icon(producto.icono, color: ColoresApp.verdePrincipal),
+                    child: const Icon(Icons.eco, color: ColoresApp.verdePrincipal),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -40,7 +41,7 @@ class TarjetaProducto extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          producto.nombre,
+                          producto?.nombre ?? 'Producto',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Row(
@@ -59,7 +60,19 @@ class TarjetaProducto extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (producto.esTratoDirecto)
+                  if (oferta.estado == EstadoOferta.agotado)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Agotado',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54),
+                      ),
+                    )
+                  else
                     const Icon(Icons.verified, color: ColoresApp.verdePrincipal, size: 20),
                 ],
               ),
@@ -68,7 +81,7 @@ class TarjetaProducto extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'C\$${producto.precioPorUnidad.toStringAsFixed(0)} / ${producto.tipoUnidad}',
+                      'C\$${oferta.precioUnitario.toStringAsFixed(0)} / ${oferta.unidadMedida.etiqueta}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),

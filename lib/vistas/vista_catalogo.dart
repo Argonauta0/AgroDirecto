@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_producto.dart';
+import '../modelos/modelo_oferta_lote.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
 import '../widgets/indicador_modo_rural.dart';
@@ -28,11 +28,12 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
     super.dispose();
   }
 
-  List<Producto> get _productosFiltrados {
-    return DatosEnMemoria.productos.where((p) {
-      final productor = DatosEnMemoria.obtenerUsuarioPorId(p.productorId);
+  List<OfertaLote> get _ofertasFiltradas {
+    return DatosEnMemoria.ofertasDisponibles.where((oferta) {
+      final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
+      final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
       final coincideTexto = _textoBusqueda.isEmpty ||
-          p.nombre.toLowerCase().contains(_textoBusqueda.toLowerCase()) ||
+          (producto?.nombre.toLowerCase().contains(_textoBusqueda.toLowerCase()) ?? false) ||
           (productor?.nombreCompleto.toLowerCase().contains(_textoBusqueda.toLowerCase()) ?? false);
       final coincideZona = _zonaSeleccionada == 'Todas' ||
           (productor?.municipio.toLowerCase().contains(_zonaSeleccionada.toLowerCase()) ?? false) ||
@@ -55,12 +56,12 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
     );
   }
 
-  void _abrirFichaTrazabilidad(Producto producto) {
+  void _abrirFichaTrazabilidad(OfertaLote oferta) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _FichaTrazabilidad(producto: producto),
+      builder: (context) => _FichaTrazabilidad(oferta: oferta),
     );
   }
 
@@ -127,16 +128,16 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _productosFiltrados.isEmpty
+            child: _ofertasFiltradas.isEmpty
                 ? const Center(child: Text('No hay lotes disponibles en esta zona.'))
                 : ListView.builder(
                     padding: const EdgeInsets.only(bottom: 96),
-                    itemCount: _productosFiltrados.length,
+                    itemCount: _ofertasFiltradas.length,
                     itemBuilder: (context, i) {
-                      final producto = _productosFiltrados[i];
+                      final oferta = _ofertasFiltradas[i];
                       return TarjetaProducto(
-                        producto: producto,
-                        onTap: () => _abrirFichaTrazabilidad(producto),
+                        oferta: oferta,
+                        onTap: () => _abrirFichaTrazabilidad(oferta),
                       );
                     },
                   ),
@@ -148,13 +149,14 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
 }
 
 class _FichaTrazabilidad extends StatelessWidget {
-  final Producto producto;
+  final OfertaLote oferta;
 
-  const _FichaTrazabilidad({required this.producto});
+  const _FichaTrazabilidad({required this.oferta});
 
   @override
   Widget build(BuildContext context) {
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
+    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
     return Container(
       decoration: const BoxDecoration(
         color: ColoresApp.blancoFondo,
@@ -181,14 +183,14 @@ class _FichaTrazabilidad extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundColor: ColoresApp.verdeClaro.withValues(alpha: 0.3),
-                child: Icon(producto.icono, color: ColoresApp.verdePrincipal, size: 28),
+                child: const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 28),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(producto.nombre, style: Theme.of(context).textTheme.titleLarge),
+                    Text(producto?.nombre ?? 'Producto', style: Theme.of(context).textTheme.titleLarge),
                     Text(
                       productor?.nombreCompleto ?? 'Productor',
                       style: const TextStyle(color: Colors.grey),
@@ -196,29 +198,28 @@ class _FichaTrazabilidad extends StatelessWidget {
                   ],
                 ),
               ),
-              if (producto.esTratoDirecto)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: ColoresApp.verdePrincipal.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.handshake, size: 14, color: ColoresApp.verdePrincipal),
-                      SizedBox(width: 4),
-                      Text(
-                        'Trato Directo',
-                        style: TextStyle(
-                          color: ColoresApp.verdePrincipal,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: ColoresApp.verdePrincipal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.local_shipping, size: 14, color: ColoresApp.verdePrincipal),
+                    const SizedBox(width: 4),
+                    Text(
+                      oferta.modalidadLogistica.etiqueta,
+                      style: const TextStyle(
+                        color: ColoresApp.verdePrincipal,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -227,11 +228,15 @@ class _FichaTrazabilidad extends StatelessWidget {
             'Municipio',
             '${productor?.municipio ?? '-'}, ${productor?.departamento ?? '-'}',
           ),
-          _filaFicha(Icons.calendar_today, 'Fecha de corte', formatearFecha(producto.fechaCosecha)),
+          _filaFicha(
+            Icons.calendar_today,
+            'Fecha de corte',
+            oferta.fechaCosecha != null ? formatearFecha(oferta.fechaCosecha!) : 'No especificada',
+          ),
           _filaFicha(
             Icons.inventory_2,
             'Disponible',
-            '${producto.cantidadDisponible} ${producto.tipoUnidad}',
+            '${oferta.cantidadDisponible} ${oferta.unidadMedida.etiqueta}',
           ),
           const SizedBox(height: 12),
           Container(
@@ -263,7 +268,7 @@ class _FichaTrazabilidad extends StatelessWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => VistaPedido(
-                      producto: producto,
+                      oferta: oferta,
                       cantidadInicial: 1,
                     ),
                   ),

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'modelos/modelo_producto.dart';
+import 'modelos/modelo_oferta_lote.dart';
 import 'modelos/modelo_pedido.dart';
+import 'modelos/modelo_producto.dart';
 import 'modelos/modelo_usuario.dart';
 
 class DatosEnMemoria {
@@ -60,77 +60,76 @@ class DatosEnMemoria {
   static List<Usuario> get compradores =>
       usuarios.where((u) => u.tipoPerfil == TipoPerfil.comprador).toList();
 
-  static final List<Producto> productos = [
-    Producto(
-      id: 'p1',
-      nombre: 'Piña Monte Lirio',
+  static final List<Producto> catalogoProductos = [
+    Producto(id: 'prod_cit_1', nombre: 'Limón Criollo', categoria: 'Cítricos'),
+    Producto(id: 'prod_cit_2', nombre: 'Limón Tahití', categoria: 'Cítricos'),
+    Producto(id: 'prod_cit_3', nombre: 'Naranja Dulce', categoria: 'Cítricos'),
+    Producto(id: 'prod_cit_4', nombre: 'Naranja Agria', categoria: 'Cítricos'),
+    Producto(id: 'prod_cit_5', nombre: 'Mandarina', categoria: 'Cítricos'),
+  ];
+
+  static final List<OfertaLote> ofertasLote = [
+    OfertaLote(
+      id: 'of1',
       productorId: 'prod1',
-      precioPorUnidad: 350.0,
-      tipoUnidad: 'Cien',
-      cantidadDisponible: 8,
-      icono: Icons.eco,
-      esTratoDirecto: true,
+      productoId: 'prod_cit_1',
+      precioUnitario: 700.0,
+      unidadMedida: UnidadMedida.quintal,
+      cantidadTotal: 20,
+      cantidadDisponible: 20,
+      modalidadLogistica: ModalidadLogisticaOferta.todas,
       fechaCosecha: DateTime(2026, 8, 18),
     ),
-    Producto(
-      id: 'p2',
-      nombre: 'Limón Tahití',
+    OfertaLote(
+      id: 'of2',
       productorId: 'prod2',
-      precioPorUnidad: 900.0,
-      tipoUnidad: 'Quintales',
+      productoId: 'prod_cit_2',
+      precioUnitario: 900.0,
+      unidadMedida: UnidadMedida.quintal,
+      cantidadTotal: 15,
       cantidadDisponible: 15,
-      icono: Icons.spa,
-      esTratoDirecto: true,
+      modalidadLogistica: ModalidadLogisticaOferta.envioProductor,
       fechaCosecha: DateTime(2026, 8, 19),
     ),
-    Producto(
-      id: 'p3',
-      nombre: 'Naranja de Jugo',
+    OfertaLote(
+      id: 'of3',
       productorId: 'prod3',
-      precioPorUnidad: 420.0,
-      tipoUnidad: 'Docenas',
+      productoId: 'prod_cit_3',
+      precioUnitario: 420.0,
+      unidadMedida: UnidadMedida.cien,
+      cantidadTotal: 30,
       cantidadDisponible: 30,
-      icono: Icons.eco,
-      esTratoDirecto: true,
+      modalidadLogistica: ModalidadLogisticaOferta.transportista,
       fechaCosecha: DateTime(2026, 8, 15),
     ),
-    Producto(
-      id: 'p4',
-      nombre: 'Chiltoma Fresca',
+    OfertaLote(
+      id: 'of4',
       productorId: 'prod4',
-      precioPorUnidad: 25.0,
-      tipoUnidad: 'Docenas',
-      cantidadDisponible: 60,
-      icono: Icons.eco,
-      esTratoDirecto: false,
+      productoId: 'prod_cit_4',
+      precioUnitario: 380.0,
+      unidadMedida: UnidadMedida.cien,
+      cantidadTotal: 25,
+      cantidadDisponible: 25,
+      modalidadLogistica: ModalidadLogisticaOferta.retiro,
       fechaCosecha: DateTime(2026, 8, 20),
+    ),
+    OfertaLote(
+      id: 'of5',
+      productorId: 'prod1',
+      productoId: 'prod_cit_5',
+      precioUnitario: 450.0,
+      unidadMedida: UnidadMedida.cien,
+      cantidadTotal: 18,
+      cantidadDisponible: 18,
+      modalidadLogistica: ModalidadLogisticaOferta.todas,
+      fechaCosecha: DateTime(2026, 8, 21),
     ),
   ];
 
   static final List<Pedido> pedidos = [];
 
-  static void agregarProducto(Producto producto) {
-    productos.insert(0, producto);
-  }
-
-  static void eliminarProducto(String id) {
-    productos.removeWhere((p) => p.id == id);
-  }
-
   static void agregarUsuario(Usuario usuario) {
     usuarios.insert(0, usuario);
-  }
-
-  static void agregarPedido(Pedido pedido) {
-    pedidos.insert(0, pedido);
-  }
-
-  static Producto? buscarProductoPorId(String id) {
-    try {
-      return productos.firstWhere((p) => p.id == id);
-    } catch (_) {
-      return null;
-    }
   }
 
   static Usuario? obtenerUsuarioPorId(String id) {
@@ -139,6 +138,54 @@ class DatosEnMemoria {
     } catch (_) {
       return null;
     }
+  }
+
+  static Producto? obtenerProductoPorId(String id) {
+    try {
+      return catalogoProductos.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static List<Producto> obtenerProductosPorCategoria(String categoria) {
+    return catalogoProductos.where((p) => p.categoria == categoria).toList();
+  }
+
+  static void agregarOfertaLote(OfertaLote oferta) {
+    ofertasLote.insert(0, oferta);
+  }
+
+  static void eliminarOfertaLote(String id) {
+    ofertasLote.removeWhere((o) => o.id == id);
+  }
+
+  static OfertaLote? obtenerOfertaLotePorId(String id) {
+    try {
+      return ofertasLote.firstWhere((o) => o.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static List<OfertaLote> get ofertasDisponibles =>
+      ofertasLote.where((o) => o.estaDisponible).toList();
+
+  static List<OfertaLote> ofertasPorProductor(String productorId) =>
+      ofertasLote.where((o) => o.productorId == productorId).toList();
+
+  static void registrarPedido(Pedido pedido) {
+    pedidos.insert(0, pedido);
+
+    final indice = ofertasLote.indexWhere((o) => o.id == pedido.ofertaId);
+    if (indice == -1) return;
+
+    final oferta = ofertasLote[indice];
+    final nuevaCantidad = oferta.cantidadDisponible - pedido.cantidadSolicitada;
+    ofertasLote[indice] = oferta.copyWith(
+      cantidadDisponible: nuevaCantidad < 0 ? 0 : nuevaCantidad,
+      estado: nuevaCantidad <= 0 ? EstadoOferta.agotado : oferta.estado,
+    );
   }
 
   static Usuario? usuarioActual;

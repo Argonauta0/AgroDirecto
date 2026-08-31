@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
+import '../modelos/modelo_oferta_lote.dart';
 import '../modelos/modelo_pedido.dart';
-import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
 import '../widgets/indicador_modo_rural.dart';
 
 class VistaPedido extends StatefulWidget {
-  final Producto producto;
+  final OfertaLote oferta;
   final int cantidadInicial;
 
-  const VistaPedido({super.key, required this.producto, required this.cantidadInicial});
+  const VistaPedido({super.key, required this.oferta, required this.cantidadInicial});
 
   @override
   State<VistaPedido> createState() => _VistaPedidoState();
@@ -18,35 +18,57 @@ class VistaPedido extends StatefulWidget {
 
 class _VistaPedidoState extends State<VistaPedido> {
   late int _cantidad;
+  late ModalidadLogisticaPedido _modalidadSeleccionada;
+
+  List<ModalidadLogisticaPedido> get _opcionesModalidad {
+    switch (widget.oferta.modalidadLogistica) {
+      case ModalidadLogisticaOferta.retiro:
+        return const [ModalidadLogisticaPedido.retiro];
+      case ModalidadLogisticaOferta.envioProductor:
+        return const [ModalidadLogisticaPedido.envioProductor];
+      case ModalidadLogisticaOferta.transportista:
+        return const [ModalidadLogisticaPedido.transportista];
+      case ModalidadLogisticaOferta.todas:
+        return const [
+          ModalidadLogisticaPedido.retiro,
+          ModalidadLogisticaPedido.envioProductor,
+          ModalidadLogisticaPedido.transportista,
+        ];
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _cantidad = widget.cantidadInicial;
+    _modalidadSeleccionada = _opcionesModalidad.first;
   }
 
-  double get _total => _cantidad * widget.producto.precioPorUnidad;
+  double get _total => _cantidad * widget.oferta.precioUnitario;
 
   void _cambiarCantidad(int delta) {
     final int nueva = _cantidad + delta;
     if (nueva < 1) return;
-    if (nueva > widget.producto.cantidadDisponible) return;
+    if (nueva > widget.oferta.cantidadDisponible) return;
     setState(() => _cantidad = nueva);
   }
 
   void _confirmarPedido() {
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(widget.producto.productorId);
+    final oferta = widget.oferta;
+    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
     final compradorActual = DatosEnMemoria.usuarioActual;
 
     final pedido = Pedido(
       id: 'ped_${DateTime.now().millisecondsSinceEpoch}',
-      productoId: widget.producto.id,
+      ofertaId: oferta.id,
       compradorId: compradorActual?.id ?? '',
+      productorId: oferta.productorId,
       cantidadSolicitada: _cantidad,
-      totalPagar: _total,
-      fecha: DateTime.now(),
+      precioUnitario: oferta.precioUnitario,
+      modalidadLogistica: _modalidadSeleccionada,
     );
-    DatosEnMemoria.agregarPedido(pedido);
+    DatosEnMemoria.registrarPedido(pedido);
 
     showDialog(
       context: context,
@@ -55,9 +77,9 @@ class _VistaPedidoState extends State<VistaPedido> {
         icon: const Icon(Icons.check_circle, color: ColoresApp.verdePrincipal, size: 48),
         title: const Text('¡Pedido Coordinado!'),
         content: Text(
-          'Tu reserva de $_cantidad ${widget.producto.tipoUnidad.toLowerCase()} de '
-          '${widget.producto.nombre} fue enviada a ${productor?.nombreCompleto ?? 'el productor'}. '
-          'Se coordinará la entrega directamente contigo.',
+          'Tu reserva de $_cantidad ${oferta.unidadMedida.etiqueta.toLowerCase()} de '
+          '${producto?.nombre ?? 'este cultivo'} fue enviada a ${productor?.nombreCompleto ?? 'el productor'}. '
+          'Modalidad: ${_modalidadSeleccionada.etiqueta}.',
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -77,8 +99,9 @@ class _VistaPedidoState extends State<VistaPedido> {
 
   @override
   Widget build(BuildContext context) {
-    final producto = widget.producto;
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(producto.productorId);
+    final oferta = widget.oferta;
+    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
+    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Confirmar Pedido'),
@@ -102,13 +125,16 @@ class _VistaPedidoState extends State<VistaPedido> {
                   children: [
                     Row(
                       children: [
-                        Icon(producto.icono, color: ColoresApp.verdePrincipal, size: 32),
+                        const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 32),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(producto.nombre, style: Theme.of(context).textTheme.titleLarge),
+                              Text(
+                                producto?.nombre ?? 'Producto',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
                               Text(
                                 '${productor?.nombreCompleto ?? 'Productor'} · ${productor?.municipio ?? ''}',
                                 style: const TextStyle(color: Colors.grey, fontSize: 13),
@@ -126,7 +152,9 @@ class _VistaPedidoState extends State<VistaPedido> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Sello de Trazabilidad · Cosecha: ${formatearFecha(producto.fechaCosecha)}',
+                            oferta.fechaCosecha != null
+                                ? 'Sello de Trazabilidad · Cosecha: ${formatearFecha(oferta.fechaCosecha!)}'
+                                : 'Sello de Trazabilidad',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -182,6 +210,20 @@ class _VistaPedidoState extends State<VistaPedido> {
               ),
             ),
             const SizedBox(height: 20),
+            Text('Modalidad de entrega', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<ModalidadLogisticaPedido>(
+              initialValue: _modalidadSeleccionada,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.local_shipping),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              items: _opcionesModalidad
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m.etiqueta)))
+                  .toList(),
+              onChanged: (v) => setState(() => _modalidadSeleccionada = v ?? _modalidadSeleccionada),
+            ),
+            const SizedBox(height: 20),
             Text('Volumen a reservar', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Row(
@@ -192,7 +234,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                   icon: const Icon(Icons.remove),
                 ),
                 Text(
-                  '$_cantidad ${producto.tipoUnidad}',
+                  '$_cantidad ${oferta.unidadMedida.etiqueta}',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton.filledTonal(
