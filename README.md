@@ -4,7 +4,7 @@
 ![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.13-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-%3E%3D3.13-0175C2?logo=dart&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)
-![License](https://img.shields.io/badge/license-Unlicensed-lightgrey)
+
 
 > Aplicación móvil que conecta directamente a productores agrícolas con compradores (restaurantes, comedores, supermercados), eliminando intermediarios en la cadena de comercialización.
 
@@ -21,7 +21,7 @@
 | Capa de datos       | Repositorio en memoria (`DatosEnMemoria`) — sin backend externo aún    |
 | Linting             | [`flutter_lints`](https://pub.dev/packages/flutter_lints) `^6.0.0`     |
 | Testing             | `flutter_test` (widget tests, SDK de Flutter)                          |
-| Plataforma soportada| Android (proyecto Flutter multiplataforma, listo para agregar iOS/Web) |
+| Plataforma soportada| Android  |
 
 > **Nota:** la aplicación no requiere `.env`, llaves de API ni base de datos para ejecutarse localmente. Toda la información (usuarios, ofertas, productos y pedidos) vive en memoria dentro de `lib/datos_en_memoria.dart` y se reinicia en cada ejecución. La capa de datos está aislada para poder sustituirse por un backend real (REST, Firebase, etc.) sin afectar las vistas.
 

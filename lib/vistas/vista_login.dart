@@ -71,20 +71,10 @@ class _VistaLoginState extends State<VistaLogin> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 24),
-              CircleAvatar(
-                radius: 44,
-                backgroundColor: ColoresApp.verdeClaro.withValues(alpha: 0.3),
-                child: const Icon(Icons.eco, color: ColoresApp.verdePrincipal, size: 48),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'AgroDirecto',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.verdeOscuro,
-                ),
+              Image.asset(
+                'assets/branding/logo_full.png',
+                height: 96,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 4),
               const Text(
