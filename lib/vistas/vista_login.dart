@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../datos_en_memoria.dart';
+import '../modelos/modelo_usuario.dart';
+import '../servicios/servicio_supabase.dart';
 import '../tema_app.dart';
 import 'vista_catalogo.dart';
 import 'vista_panel_productor.dart';
@@ -17,6 +18,7 @@ class _VistaLoginState extends State<VistaLogin> {
   final TextEditingController _controladorTelefono = TextEditingController();
   final TextEditingController _controladorClave = TextEditingController();
   bool _claveVisible = false;
+  bool _cargando = false;
 
   @override
   void dispose() {
@@ -25,17 +27,53 @@ class _VistaLoginState extends State<VistaLogin> {
     super.dispose();
   }
 
-  void _iniciarSesionManual() {
+  void _irAVistaSegunPerfil(Usuario usuario) {
+    if (usuario.esProductor) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const VistaPanelProductor()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const VistaCatalogo()),
+      );
+    }
+  }
+
+  Future<void> _iniciarSesionManual() async {
+    if (_cargando) return;
     if (!_formKey.currentState!.validate()) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Usa el acceso rápido para demo mientras habilitamos el inicio con teléfono.',
-          style: TextStyle(color: Colors.black87),
-        ),
-        backgroundColor: ColoresApp.naranjaAviso,
-      ),
-    );
+
+    setState(() => _cargando = true);
+    try {
+      final usuario = await ServicioSupabase.login(
+        _controladorTelefono.text.trim(),
+        _controladorClave.text,
+      );
+      if (!mounted) return;
+
+      if (usuario == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Teléfono o contraseña incorrectos.',
+              style: TextStyle(color: Colors.black87),
+            ),
+            backgroundColor: ColoresApp.naranjaAviso,
+          ),
+        );
+        return;
+      }
+
+      ServicioSupabase.usuarioActual = usuario;
+      _irAVistaSegunPerfil(usuario);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al iniciar sesión: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
   }
 
   void _irARegistro() {
@@ -44,20 +82,32 @@ class _VistaLoginState extends State<VistaLogin> {
     );
   }
 
-  void _entrarComoProductor() {
-    final primerProductor = DatosEnMemoria.usuarios.firstWhere((u) => u.esProductor);
-    DatosEnMemoria.iniciarSesion(primerProductor.id);
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const VistaPanelProductor()),
-    );
-  }
+  Future<void> _entrarComoDemo(TipoPerfil perfil) async {
+    if (_cargando) return;
 
-  void _entrarComoComprador() {
-    final primerComprador = DatosEnMemoria.usuarios.firstWhere((u) => u.esComprador);
-    DatosEnMemoria.iniciarSesion(primerComprador.id);
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const VistaCatalogo()),
-    );
+    setState(() => _cargando = true);
+    try {
+      final usuarios = await ServicioSupabase.obtenerUsuariosPorPerfil(perfil);
+      if (!mounted) return;
+
+      if (usuarios.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay usuarios de demo registrados para este perfil.')),
+        );
+        return;
+      }
+
+      final usuario = usuarios.first;
+      ServicioSupabase.usuarioActual = usuario;
+      _irAVistaSegunPerfil(usuario);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error de conexión con Supabase: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
   }
 
   @override
@@ -116,8 +166,14 @@ class _VistaLoginState extends State<VistaLogin> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton.icon(
-                      onPressed: _iniciarSesionManual,
-                      icon: const Icon(Icons.login),
+                      onPressed: _cargando ? null : _iniciarSesionManual,
+                      icon: _cargando
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.login),
                       label: const Text('Iniciar Sesión'),
                     ),
                     const SizedBox(height: 12),
@@ -169,7 +225,7 @@ class _VistaLoginState extends State<VistaLogin> {
                 titulo: 'Soy Productor Agrícola',
                 subtitulo: 'Publica y gestiona tus cosechas',
                 color: ColoresApp.verdePrincipal,
-                onTap: _entrarComoProductor,
+                onTap: () => _entrarComoDemo(TipoPerfil.productor),
               ),
               const SizedBox(height: 12),
               _TarjetaAccesoDemo(
@@ -177,7 +233,7 @@ class _VistaLoginState extends State<VistaLogin> {
                 titulo: 'Soy Comprador / Restaurante',
                 subtitulo: 'Explora el catálogo y reserva cosechas',
                 color: ColoresApp.naranjaAviso,
-                onTap: _entrarComoComprador,
+                onTap: () => _entrarComoDemo(TipoPerfil.comprador),
               ),
               const SizedBox(height: 16),
             ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../datos_en_memoria.dart';
 import '../modelos/modelo_usuario.dart';
+import '../servicios/servicio_supabase.dart';
 import '../tema_app.dart';
 import 'vista_catalogo.dart';
 import 'vista_panel_productor.dart';
@@ -32,6 +32,7 @@ class _VistaRegistroState extends State<VistaRegistro> {
     'Otro',
   ];
   String _tipoNegocioSeleccionado = 'Supermercado';
+  bool _registrando = false;
 
   @override
   void dispose() {
@@ -47,7 +48,8 @@ class _VistaRegistroState extends State<VistaRegistro> {
     setState(() => _rolSeleccionado = rol);
   }
 
-  void _registrar() {
+  Future<void> _registrar() async {
+    if (_registrando) return;
     if (!_formKey.currentState!.validate()) return;
 
     final esProductor = _rolSeleccionado == _RolRegistro.productor;
@@ -64,17 +66,29 @@ class _VistaRegistroState extends State<VistaRegistro> {
       municipio: _controladorMunicipio.text.trim(),
       direccionExacta: direccionExacta,
     );
-    DatosEnMemoria.agregarUsuario(usuario);
-    DatosEnMemoria.iniciarSesion(usuario.id);
 
-    if (esProductor) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const VistaPanelProductor()),
+    setState(() => _registrando = true);
+    try {
+      await ServicioSupabase.registrarUsuario(usuario);
+      ServicioSupabase.usuarioActual = usuario;
+      if (!mounted) return;
+
+      if (esProductor) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const VistaPanelProductor()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const VistaCatalogo()),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo crear la cuenta: $e')),
       );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const VistaCatalogo()),
-      );
+    } finally {
+      if (mounted) setState(() => _registrando = false);
     }
   }
 
@@ -171,8 +185,14 @@ class _VistaRegistroState extends State<VistaRegistro> {
           if (esProductor) ..._camposProductor() else ..._camposComprador(),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: _registrar,
-            icon: const Icon(Icons.check_circle_outline),
+            onPressed: _registrando ? null : _registrar,
+            icon: _registrando
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_circle_outline),
             label: const Text('Crear cuenta'),
           ),
         ],

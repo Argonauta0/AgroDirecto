@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
-import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_agricola.dart';
+import '../modelos/modelo_producto.dart';
 import '../modelos/modelo_solicitud_compra.dart';
+import '../modelos/modelo_usuario.dart';
+import '../servicios/servicio_supabase.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
 import '../widgets/indicador_inventario.dart';
 
 class VistaPedido extends StatefulWidget {
   final OfertaAgricola oferta;
+  final Producto? producto;
+  final Usuario? productor;
   final int cantidadInicial;
 
-  const VistaPedido({super.key, required this.oferta, required this.cantidadInicial});
+  const VistaPedido({
+    super.key,
+    required this.oferta,
+    required this.producto,
+    required this.productor,
+    required this.cantidadInicial,
+  });
 
   @override
   State<VistaPedido> createState() => _VistaPedidoState();
@@ -19,6 +29,7 @@ class VistaPedido extends StatefulWidget {
 class _VistaPedidoState extends State<VistaPedido> {
   late int _cantidad;
   late ModalidadLogistica _modalidadSeleccionada;
+  bool _confirmando = false;
 
   List<ModalidadLogistica> get _opcionesModalidad {
     switch (widget.oferta.modalidadLogistica) {
@@ -53,11 +64,13 @@ class _VistaPedidoState extends State<VistaPedido> {
     setState(() => _cantidad = nueva);
   }
 
-  void _confirmarPedido() {
+  Future<void> _confirmarPedido() async {
+    if (_confirmando) return;
+
     final oferta = widget.oferta;
-    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
-    final compradorActual = DatosEnMemoria.usuarioActual;
+    final producto = widget.producto;
+    final productor = widget.productor;
+    final compradorActual = ServicioSupabase.usuarioActual;
 
     final solicitud = SolicitudCompra(
       id: 'sol_${DateTime.now().millisecondsSinceEpoch}',
@@ -69,40 +82,52 @@ class _VistaPedidoState extends State<VistaPedido> {
       modalidadLogistica: _modalidadSeleccionada,
       estado: EstadoSolicitud.confirmado,
     );
-    DatosEnMemoria.registrarSolicitud(solicitud);
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.check_circle, color: ColoresApp.verdePrincipal, size: 48),
-        title: const Text('¡Pedido Coordinado!'),
-        content: Text(
-          'Tu reserva de $_cantidad ${oferta.unidadMedida.etiqueta.toLowerCase()} de '
-          '${producto?.nombre ?? 'este cultivo'} fue enviada a ${productor?.nombreCompleto ?? 'el productor'}. '
-          'Modalidad: ${_modalidadSeleccionada.etiqueta}.',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-              child: const Text('Volver al Catálogo'),
-            ),
+    setState(() => _confirmando = true);
+    try {
+      await ServicioSupabase.procesarPedido(solicitud);
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.check_circle, color: ColoresApp.verdePrincipal, size: 48),
+          title: const Text('¡Pedido Coordinado!'),
+          content: Text(
+            'Tu reserva de $_cantidad ${oferta.unidadMedida.etiqueta.toLowerCase()} de '
+            '${producto?.nombre ?? 'este cultivo'} fue enviada a ${productor?.nombreCompleto ?? 'el productor'}. '
+            'Modalidad: ${_modalidadSeleccionada.etiqueta}.',
+            textAlign: TextAlign.center,
           ),
-        ],
-      ),
-    );
+          actions: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                child: const Text('Volver al Catálogo'),
+              ),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo coordinar el pedido: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _confirmando = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final oferta = widget.oferta;
-    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
+    final producto = widget.producto;
+    final productor = widget.productor;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Confirmar Pedido'),
@@ -235,7 +260,7 @@ class _VistaPedidoState extends State<VistaPedido> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      DatosEnMemoria.usuarioActual?.nombreCompleto ??
+                      ServicioSupabase.usuarioActual?.nombreCompleto ??
                           'Sesión de comprador no encontrada',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
@@ -323,8 +348,14 @@ class _VistaPedidoState extends State<VistaPedido> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _confirmarPedido,
-                icon: const Icon(Icons.support_agent),
+                onPressed: _confirmando ? null : _confirmarPedido,
+                icon: _confirmando
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.support_agent),
                 label: const Text('Confirmar y Coordinar Entrega'),
                 style: TemaApp.botonNaranja,
               ),

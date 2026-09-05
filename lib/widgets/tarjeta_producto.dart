@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
-import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_agricola.dart';
+import '../modelos/modelo_producto.dart';
+import '../modelos/modelo_usuario.dart';
 import '../tema_app.dart';
 import 'indicador_inventario.dart';
 
 class TarjetaProducto extends StatelessWidget {
   final OfertaAgricola oferta;
+  final Producto? producto;
+  final Usuario? productor;
   final VoidCallback onTap;
   final VoidCallback? onEliminar;
 
   const TarjetaProducto({
     super.key,
     required this.oferta,
+    required this.producto,
+    required this.productor,
     required this.onTap,
     this.onEliminar,
   });
@@ -38,8 +43,6 @@ class TarjetaProducto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
@@ -117,7 +120,7 @@ class TarjetaProducto extends StatelessWidget {
                   Expanded(
                     child: Text(
                       productor != null
-                          ? '${productor.municipio}, ${productor.departamento}'
+                          ? '${productor!.municipio}, ${productor!.departamento}'
                           : 'Ubicación no disponible',
                       style: const TextStyle(
                         fontSize: 12.5,

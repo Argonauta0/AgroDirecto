@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_agricola.dart';
+import '../modelos/modelo_producto.dart';
+import '../servicios/servicio_supabase.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_inventario.dart';
 import '../widgets/resumen_liquidacion.dart';
@@ -16,9 +17,14 @@ class VistaEditarOferta extends StatefulWidget {
 
 class _VistaEditarOfertaState extends State<VistaEditarOferta> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _controladorPrecio;
+  final TextEditingController _controladorPrecio = TextEditingController();
 
-  OfertaAgricola? get _oferta => DatosEnMemoria.obtenerOfertaPorId(widget.ofertaId);
+  bool _cargando = true;
+  String? _error;
+  OfertaAgricola? _oferta;
+  Producto? _producto;
+  bool _guardandoPrecio = false;
+  bool _alternandoPausa = false;
 
   double get _precioEnEdicion =>
       double.tryParse(_controladorPrecio.text) ?? _oferta?.precioUnitario ?? 0;
@@ -26,15 +32,38 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
   @override
   void initState() {
     super.initState();
-    _controladorPrecio = TextEditingController(
-      text: _oferta?.precioUnitario.toStringAsFixed(0) ?? '',
-    );
+    _cargarOferta();
   }
 
   @override
   void dispose() {
     _controladorPrecio.dispose();
     super.dispose();
+  }
+
+  Future<void> _cargarOferta() async {
+    setState(() {
+      _cargando = true;
+      _error = null;
+    });
+    try {
+      final oferta = await ServicioSupabase.obtenerOfertaPorId(widget.ofertaId);
+      final producto =
+          oferta != null ? await ServicioSupabase.obtenerProductoPorId(oferta.productoId) : null;
+      if (!mounted) return;
+      setState(() {
+        _oferta = oferta;
+        _producto = producto;
+        _controladorPrecio.text = oferta?.precioUnitario.toStringAsFixed(0) ?? '';
+        _cargando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'No se pudo cargar la oferta: $e';
+        _cargando = false;
+      });
+    }
   }
 
   Color _fondoEstado(OfertaAgricola oferta) {
@@ -53,26 +82,39 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
     return ColoresApp.colorTextoSobre(_fondoEstado(oferta));
   }
 
-  void _guardarPrecio() {
+  Future<void> _guardarPrecio() async {
+    if (_guardandoPrecio) return;
     if (!_formKey.currentState!.validate()) return;
     final oferta = _oferta;
     if (oferta == null) return;
 
     final nuevoPrecio = double.parse(_controladorPrecio.text);
-    if (nuevoPrecio != oferta.precioUnitario) {
-      DatosEnMemoria.actualizarPrecioOferta(oferta.id, nuevoPrecio);
+    setState(() => _guardandoPrecio = true);
+    try {
+      if (nuevoPrecio != oferta.precioUnitario) {
+        await ServicioSupabase.actualizarPrecioOferta(oferta.id, nuevoPrecio);
+      }
+      if (!mounted) return;
+      await _cargarOferta();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Precio actualizado'),
+          backgroundColor: ColoresApp.verdePrincipal,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo actualizar el precio: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _guardandoPrecio = false);
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Precio actualizado'),
-        backgroundColor: ColoresApp.verdePrincipal,
-      ),
-    );
-    setState(() {});
   }
 
   Future<void> _alternarPausa() async {
+    if (_alternandoPausa) return;
     final oferta = _oferta;
     if (oferta == null) return;
 
@@ -101,12 +143,54 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
 
     if (confirmar != true) return;
 
-    DatosEnMemoria.alternarPausaOferta(oferta.id);
-    setState(() {});
+    final nuevoEstado = pausando ? EstadoOferta.pausada : EstadoOferta.disponible;
+    setState(() => _alternandoPausa = true);
+    try {
+      await ServicioSupabase.alternarPausaOferta(oferta.id, nuevoEstado);
+      if (!mounted) return;
+      await _cargarOferta();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo actualizar el estado: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _alternandoPausa = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_cargando) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Editar oferta')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Editar oferta')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_error!, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _cargarOferta,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final oferta = _oferta;
 
     if (oferta == null) {
@@ -116,7 +200,7 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
       );
     }
 
-    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
+    final producto = _producto;
 
     return Scaffold(
       appBar: AppBar(
@@ -205,8 +289,14 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _guardarPrecio,
-                  icon: const Icon(Icons.save),
+                  onPressed: _guardandoPrecio ? null : _guardarPrecio,
+                  icon: _guardandoPrecio
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save),
                   label: const Text('Guardar precio'),
                 ),
               ),
@@ -231,7 +321,7 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: _alternarPausa,
+                    onPressed: _alternandoPausa ? null : _alternarPausa,
                     icon: Icon(
                       oferta.estado == EstadoOferta.pausada ? Icons.play_arrow : Icons.pause,
                     ),
@@ -253,4 +343,3 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
       );
   }
 }
-

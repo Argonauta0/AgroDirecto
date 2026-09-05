@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../datos_en_memoria.dart';
 import '../modelos/modelo_oferta_agricola.dart';
 import '../modelos/modelo_producto.dart';
+import '../modelos/modelo_usuario.dart';
+import '../servicios/servicio_supabase.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
 import '../widgets/indicador_inventario.dart';
@@ -42,11 +43,18 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
   final TextEditingController _controladorBusqueda = TextEditingController();
   String _textoBusqueda = '';
 
-  late final double _precioMinimo;
-  late final double _precioMaximo;
+  bool _cargando = true;
+  String? _error;
+
+  List<OfertaAgricola> _ofertas = [];
+  Map<String, Producto> _productosPorId = {};
+  Map<String, Usuario> _productoresPorId = {};
+
+  double _precioMinimo = 0;
+  double _precioMaximo = 1000;
 
   Producto? _cultivoSeleccionado;
-  late RangeValues _rangoPrecio;
+  RangeValues _rangoPrecio = const RangeValues(0, 1000);
   String? _departamentoSeleccionado;
   String? _municipioSeleccionado;
   Set<ModalidadLogistica> _modalidadesSeleccionadas = {};
@@ -54,20 +62,52 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
   @override
   void initState() {
     super.initState();
-    final precios = DatosEnMemoria.ofertas.map((o) => o.precioUnitario).toList();
-    _precioMinimo = precios.isEmpty ? 0 : precios.reduce((a, b) => a < b ? a : b);
-    _precioMaximo = precios.isEmpty ? 1000 : precios.reduce((a, b) => a > b ? a : b);
-    if (_precioMaximo <= _precioMinimo) {
-      _rangoPrecio = RangeValues(_precioMinimo, _precioMinimo + 1);
-    } else {
-      _rangoPrecio = RangeValues(_precioMinimo, _precioMaximo);
-    }
+    _cargarDatos();
   }
 
   @override
   void dispose() {
     _controladorBusqueda.dispose();
     super.dispose();
+  }
+
+  Future<void> _cargarDatos() async {
+    setState(() {
+      _cargando = true;
+      _error = null;
+    });
+    try {
+      final resultados = await Future.wait([
+        ServicioSupabase.obtenerOfertasDisponibles(),
+        ServicioSupabase.obtenerCatalogo(),
+        ServicioSupabase.obtenerUsuariosPorPerfil(TipoPerfil.productor),
+      ]);
+      final ofertas = resultados[0] as List<OfertaAgricola>;
+      final productos = resultados[1] as List<Producto>;
+      final productores = resultados[2] as List<Usuario>;
+
+      final precios = ofertas.map((o) => o.precioUnitario).toList();
+      final precioMinimo = precios.isEmpty ? 0.0 : precios.reduce((a, b) => a < b ? a : b);
+      final precioMaximoBruto = precios.isEmpty ? 1000.0 : precios.reduce((a, b) => a > b ? a : b);
+      final precioMaximo = precioMaximoBruto <= precioMinimo ? precioMinimo + 1 : precioMaximoBruto;
+
+      if (!mounted) return;
+      setState(() {
+        _ofertas = ofertas;
+        _productosPorId = {for (final p in productos) p.id: p};
+        _productoresPorId = {for (final u in productores) u.id: u};
+        _precioMinimo = precioMinimo;
+        _precioMaximo = precioMaximo;
+        _rangoPrecio = RangeValues(precioMinimo, precioMaximo);
+        _cargando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'No se pudieron cargar las cosechas: $e';
+        _cargando = false;
+      });
+    }
   }
 
   bool get _hayFiltrosActivos =>
@@ -79,9 +119,9 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
       _modalidadesSeleccionadas.isNotEmpty;
 
   List<OfertaAgricola> get _ofertasFiltradas {
-    return DatosEnMemoria.ofertasDisponibles.where((oferta) {
-      final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
-      final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
+    return _ofertas.where((oferta) {
+      final producto = _productosPorId[oferta.productoId];
+      final productor = _productoresPorId[oferta.productorId];
 
       final coincideTexto = _textoBusqueda.isEmpty ||
           (producto?.nombre.toLowerCase().contains(_textoBusqueda.toLowerCase()) ?? false) ||
@@ -135,6 +175,8 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
         departamentoSeleccionado: _departamentoSeleccionado,
         municipioSeleccionado: _municipioSeleccionado,
         modalidadesSeleccionadas: _modalidadesSeleccionadas,
+        cultivosDisponibles: _productosPorId.values.toList(),
+        productores: _productoresPorId.values.toList(),
       ),
     );
     if (resultado == null) return;
@@ -154,7 +196,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
   }
 
   void _cerrarSesion() {
-    DatosEnMemoria.cerrarSesion();
+    ServicioSupabase.usuarioActual = null;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const VistaLogin()),
       (route) => false,
@@ -166,7 +208,11 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _FichaTrazabilidad(oferta: oferta),
+      builder: (context) => _FichaTrazabilidad(
+        oferta: oferta,
+        producto: _productosPorId[oferta.productoId],
+        productor: _productoresPorId[oferta.productorId],
+      ),
     );
   }
 
@@ -188,121 +234,152 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controladorBusqueda,
-                    onChanged: (v) => setState(() => _textoBusqueda = v),
-                    decoration: InputDecoration(
-                      hintText: 'Buscar cultivo o productor...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
+      body: _cargando
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.error_outline, size: 56, color: Colors.grey.shade400),
+                        const SizedBox(height: 12),
+                        Text(_error!, textAlign: TextAlign.center),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _cargarDatos,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reintentar'),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Badge(
-                  isLabelVisible: _hayFiltrosActivos,
-                  child: IconButton.filledTonal(
-                    onPressed: _abrirFiltros,
-                    icon: const Icon(Icons.tune),
-                    tooltip: 'Filtros',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_hayFiltrosActivos)
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: _limpiarFiltros,
-                  icon: const Icon(Icons.clear, size: 16),
-                  label: const Text('Limpiar filtros'),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-              ),
-            ),
-          if (_ofertasFiltradas.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${_ofertasFiltradas.length} cosecha${_ofertasFiltradas.length == 1 ? '' : 's'} disponible${_ofertasFiltradas.length == 1 ? '' : 's'}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ),
-          Expanded(
-            child: _ofertasFiltradas.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.search_off, size: 56, color: Colors.grey.shade400),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'No hay cosechas disponibles',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _hayFiltrosActivos
-                                ? 'Ningún lote coincide con los filtros aplicados.'
-                                : 'Todavía no hay productores publicando cosechas.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          if (_hayFiltrosActivos) ...[
-                            const SizedBox(height: 12),
-                            TextButton.icon(
+                )
+              : RefreshIndicator(
+                  onRefresh: _cargarDatos,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _controladorBusqueda,
+                                onChanged: (v) => setState(() => _textoBusqueda = v),
+                                decoration: InputDecoration(
+                                  hintText: 'Buscar cultivo o productor...',
+                                  prefixIcon: const Icon(Icons.search),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  filled: true,
+                                  fillColor: Colors.grey.shade100,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Badge(
+                              isLabelVisible: _hayFiltrosActivos,
+                              child: IconButton.filledTonal(
+                                onPressed: _abrirFiltros,
+                                icon: const Icon(Icons.tune),
+                                tooltip: 'Filtros',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_hayFiltrosActivos)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
                               onPressed: _limpiarFiltros,
                               icon: const Icon(Icons.clear, size: 16),
                               label: const Text('Limpiar filtros'),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                             ),
-                          ],
-                        ],
+                          ),
+                        ),
+                      if (_ofertasFiltradas.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${_ofertasFiltradas.length} cosecha${_ofertasFiltradas.length == 1 ? '' : 's'} disponible${_ofertasFiltradas.length == 1 ? '' : 's'}',
+                              style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ),
+                      Expanded(
+                        child: _ofertasFiltradas.isEmpty
+                            ? ListView(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.search_off, size: 56, color: Colors.grey.shade400),
+                                        const SizedBox(height: 12),
+                                        const Text(
+                                          'No hay cosechas disponibles',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _hayFiltrosActivos
+                                              ? 'Ningún lote coincide con los filtros aplicados.'
+                                              : 'Todavía no hay productores publicando cosechas.',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(color: Colors.grey),
+                                        ),
+                                        if (_hayFiltrosActivos) ...[
+                                          const SizedBox(height: 12),
+                                          TextButton.icon(
+                                            onPressed: _limpiarFiltros,
+                                            icon: const Icon(Icons.clear, size: 16),
+                                            label: const Text('Limpiar filtros'),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.only(bottom: 96),
+                                itemCount: _ofertasFiltradas.length,
+                                itemBuilder: (context, i) {
+                                  final oferta = _ofertasFiltradas[i];
+                                  return TarjetaProducto(
+                                    oferta: oferta,
+                                    producto: _productosPorId[oferta.productoId],
+                                    productor: _productoresPorId[oferta.productorId],
+                                    onTap: () => _abrirFichaTrazabilidad(oferta),
+                                  );
+                                },
+                              ),
                       ),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 96),
-                    itemCount: _ofertasFiltradas.length,
-                    itemBuilder: (context, i) {
-                      final oferta = _ofertasFiltradas[i];
-                      return TarjetaProducto(
-                        oferta: oferta,
-                        onTap: () => _abrirFichaTrazabilidad(oferta),
-                      );
-                    },
+                    ],
                   ),
-          ),
-        ],
-      ),
+                ),
     );
   }
 }
 
 class _FichaTrazabilidad extends StatelessWidget {
   final OfertaAgricola oferta;
+  final Producto? producto;
+  final Usuario? productor;
 
-  const _FichaTrazabilidad({required this.oferta});
+  const _FichaTrazabilidad({required this.oferta, required this.producto, required this.productor});
 
   Color _fondoEstado() {
     if (oferta.estado == EstadoOferta.pausada) return ColoresApp.naranjaAviso;
@@ -322,8 +399,6 @@ class _FichaTrazabilidad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
-    final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
     final double valorTotalLote = oferta.precioUnitario * oferta.cantidadTotal;
 
     return Container(
@@ -440,9 +515,9 @@ class _FichaTrazabilidad extends StatelessWidget {
               Icons.location_on,
               'Origen',
               productor != null
-                  ? (productor.direccionExacta.isNotEmpty
-                      ? '${productor.direccionExacta}, ${productor.municipio}, ${productor.departamento}'
-                      : '${productor.municipio}, ${productor.departamento}')
+                  ? (productor!.direccionExacta.isNotEmpty
+                      ? '${productor!.direccionExacta}, ${productor!.municipio}, ${productor!.departamento}'
+                      : '${productor!.municipio}, ${productor!.departamento}')
                   : 'No disponible',
             ),
             const SizedBox(height: 16),
@@ -503,6 +578,8 @@ class _FichaTrazabilidad extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => VistaPedido(
                               oferta: oferta,
+                              producto: producto,
+                              productor: productor,
                               cantidadInicial: 1,
                             ),
                           ),
@@ -543,6 +620,8 @@ class _HojaFiltros extends StatefulWidget {
   final String? departamentoSeleccionado;
   final String? municipioSeleccionado;
   final Set<ModalidadLogistica> modalidadesSeleccionadas;
+  final List<Producto> cultivosDisponibles;
+  final List<Usuario> productores;
 
   const _HojaFiltros({
     required this.cultivoSeleccionado,
@@ -552,6 +631,8 @@ class _HojaFiltros extends StatefulWidget {
     required this.departamentoSeleccionado,
     required this.municipioSeleccionado,
     required this.modalidadesSeleccionadas,
+    required this.cultivosDisponibles,
+    required this.productores,
   });
 
   @override
@@ -576,15 +657,15 @@ class _HojaFiltrosState extends State<_HojaFiltros> {
   }
 
   List<String> get _departamentosDisponibles {
-    final valores = DatosEnMemoria.productores.map((p) => p.departamento).toSet().toList();
+    final valores = widget.productores.map((p) => p.departamento).toSet().toList();
     valores.sort();
     return valores;
   }
 
   List<String> get _municipiosDisponibles {
     final productores = _departamento == null
-        ? DatosEnMemoria.productores
-        : DatosEnMemoria.productores.where((p) => p.departamento == _departamento);
+        ? widget.productores
+        : widget.productores.where((p) => p.departamento == _departamento);
     final valores = productores.map((p) => p.municipio).toSet().toList();
     valores.sort();
     return valores;
@@ -653,7 +734,7 @@ class _HojaFiltrosState extends State<_HojaFiltros> {
               ),
               items: [
                 const DropdownMenuItem<Producto?>(value: null, child: Text('Todos los cultivos')),
-                ...DatosEnMemoria.catalogoProductos.map(
+                ...widget.cultivosDisponibles.map(
                   (p) => DropdownMenuItem<Producto?>(value: p, child: Text(p.nombre)),
                 ),
               ],
