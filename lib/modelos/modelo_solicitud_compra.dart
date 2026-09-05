@@ -1,94 +1,56 @@
-enum ModalidadLogisticaPedido {
-  retiro,
-  envioProductor,
-  transportista;
+import 'modelo_oferta_agricola.dart' show ModalidadLogistica;
 
-  static const Map<ModalidadLogisticaPedido, String> _valoresDb = {
-    ModalidadLogisticaPedido.retiro: 'RETIRO',
-    ModalidadLogisticaPedido.envioProductor: 'ENVIO_PRODUCTOR',
-    ModalidadLogisticaPedido.transportista: 'TRANSPORTISTA',
-  };
+export 'modelo_oferta_agricola.dart' show ModalidadLogistica, ModalidadLogisticaEtiqueta;
 
-  String toJson() => _valoresDb[this]!;
-
-  static ModalidadLogisticaPedido fromJson(String valor) {
-    final valorNormalizado = valor.toUpperCase();
-    return _valoresDb.entries
-        .firstWhere(
-          (entrada) => entrada.value == valorNormalizado,
-          orElse: () => const MapEntry(ModalidadLogisticaPedido.retiro, 'RETIRO'),
-        )
-        .key;
-  }
-}
-
-extension ModalidadLogisticaPedidoEtiqueta on ModalidadLogisticaPedido {
-  String get etiqueta {
-    switch (this) {
-      case ModalidadLogisticaPedido.retiro:
-        return 'Retiro en finca';
-      case ModalidadLogisticaPedido.envioProductor:
-        return 'Envío del productor';
-      case ModalidadLogisticaPedido.transportista:
-        return 'Transportista';
-    }
-  }
-}
-
-enum EstadoPedido {
+enum EstadoSolicitud {
   enNegociacion,
-  vendido,
+  confirmado,
   cancelado;
 
-  static const Map<EstadoPedido, String> _valoresDb = {
-    EstadoPedido.enNegociacion: 'EN_NEGOCIACION',
-    EstadoPedido.vendido: 'VENDIDO',
-    EstadoPedido.cancelado: 'CANCELADO',
+  static const Map<EstadoSolicitud, String> _valoresDb = {
+    EstadoSolicitud.enNegociacion: 'EN_NEGOCIACION',
+    EstadoSolicitud.confirmado: 'CONFIRMADO',
+    EstadoSolicitud.cancelado: 'CANCELADO',
   };
 
   String toJson() => _valoresDb[this]!;
 
-  static EstadoPedido fromJson(String valor) {
+  static EstadoSolicitud fromJson(String valor) {
     final valorNormalizado = valor.toUpperCase();
     return _valoresDb.entries
         .firstWhere(
           (entrada) => entrada.value == valorNormalizado,
-          orElse: () => const MapEntry(EstadoPedido.enNegociacion, 'EN_NEGOCIACION'),
+          orElse: () => const MapEntry(EstadoSolicitud.enNegociacion, 'EN_NEGOCIACION'),
         )
         .key;
   }
 }
 
-extension EstadoPedidoEtiqueta on EstadoPedido {
+extension EstadoSolicitudEtiqueta on EstadoSolicitud {
   String get etiqueta {
     switch (this) {
-      case EstadoPedido.enNegociacion:
+      case EstadoSolicitud.enNegociacion:
         return 'En negociación';
-      case EstadoPedido.vendido:
-        return 'Vendido';
-      case EstadoPedido.cancelado:
+      case EstadoSolicitud.confirmado:
+        return 'Confirmado';
+      case EstadoSolicitud.cancelado:
         return 'Cancelado';
     }
   }
 }
 
-class Pedido {
-  static const double comisionPlataformaPorcentaje = 0.06;
-
+class SolicitudCompra {
   final String id;
   final String ofertaId;
   final String compradorId;
   final String productorId;
   final int cantidadSolicitada;
   final double precioUnitario;
-  final double totalBruto;
-  final double comisionPlataforma;
-  final double ingresoNetoProductor;
-  final ModalidadLogisticaPedido modalidadLogistica;
-  final EstadoPedido estado;
+  final ModalidadLogistica modalidadLogistica;
+  final EstadoSolicitud estado;
   final DateTime creadoEn;
 
-  Pedido({
+  SolicitudCompra({
     required this.id,
     required this.ofertaId,
     required this.compradorId,
@@ -96,24 +58,22 @@ class Pedido {
     required this.cantidadSolicitada,
     required this.precioUnitario,
     required this.modalidadLogistica,
-    this.estado = EstadoPedido.enNegociacion,
+    this.estado = EstadoSolicitud.enNegociacion,
     DateTime? creadoEn,
-  })  : totalBruto = cantidadSolicitada * precioUnitario,
-        comisionPlataforma = cantidadSolicitada * precioUnitario * comisionPlataformaPorcentaje,
-        ingresoNetoProductor =
-            cantidadSolicitada * precioUnitario * (1 - comisionPlataformaPorcentaje),
-        creadoEn = creadoEn ?? DateTime.now();
+  }) : creadoEn = creadoEn ?? DateTime.now();
 
-  factory Pedido.fromJson(Map<String, dynamic> json) {
-    return Pedido(
+  double get subtotal => cantidadSolicitada * precioUnitario;
+
+  factory SolicitudCompra.fromJson(Map<String, dynamic> json) {
+    return SolicitudCompra(
       id: json['id'] as String,
       ofertaId: json['ofertaId'] as String,
       compradorId: json['compradorId'] as String,
       productorId: json['productorId'] as String,
       cantidadSolicitada: json['cantidadSolicitada'] as int,
       precioUnitario: (json['precioUnitario'] as num).toDouble(),
-      modalidadLogistica: ModalidadLogisticaPedido.fromJson(json['modalidadLogistica'] as String),
-      estado: EstadoPedido.fromJson(json['estado'] as String? ?? 'EN_NEGOCIACION'),
+      modalidadLogistica: ModalidadLogistica.fromJson(json['modalidadLogistica'] as String),
+      estado: EstadoSolicitud.fromJson(json['estado'] as String? ?? 'EN_NEGOCIACION'),
       creadoEn: json['creadoEn'] != null ? DateTime.parse(json['creadoEn'] as String) : null,
     );
   }
@@ -126,27 +86,24 @@ class Pedido {
       'productorId': productorId,
       'cantidadSolicitada': cantidadSolicitada,
       'precioUnitario': precioUnitario,
-      'totalBruto': totalBruto,
-      'comisionPlataforma': comisionPlataforma,
-      'ingresoNetoProductor': ingresoNetoProductor,
       'modalidadLogistica': modalidadLogistica.toJson(),
       'estado': estado.toJson(),
       'creadoEn': creadoEn.toIso8601String(),
     };
   }
 
-  Pedido copyWith({
+  SolicitudCompra copyWith({
     String? id,
     String? ofertaId,
     String? compradorId,
     String? productorId,
     int? cantidadSolicitada,
     double? precioUnitario,
-    ModalidadLogisticaPedido? modalidadLogistica,
-    EstadoPedido? estado,
+    ModalidadLogistica? modalidadLogistica,
+    EstadoSolicitud? estado,
     DateTime? creadoEn,
   }) {
-    return Pedido(
+    return SolicitudCompra(
       id: id ?? this.id,
       ofertaId: ofertaId ?? this.ofertaId,
       compradorId: compradorId ?? this.compradorId,
@@ -162,7 +119,7 @@ class Pedido {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Pedido &&
+    return other is SolicitudCompra &&
         other.id == id &&
         other.ofertaId == ofertaId &&
         other.compradorId == compradorId &&
@@ -189,6 +146,6 @@ class Pedido {
 
   @override
   String toString() =>
-      'Pedido(id: $id, ofertaId: $ofertaId, cantidadSolicitada: $cantidadSolicitada, '
-      'totalBruto: $totalBruto, estado: $estado)';
+      'SolicitudCompra(id: $id, ofertaId: $ofertaId, cantidadSolicitada: $cantidadSolicitada, '
+      'subtotal: $subtotal, estado: $estado)';
 }

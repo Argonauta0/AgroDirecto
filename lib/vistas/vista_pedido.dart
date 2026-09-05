@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_oferta_lote.dart';
-import '../modelos/modelo_pedido.dart';
+import '../modelos/modelo_oferta_agricola.dart';
+import '../modelos/modelo_solicitud_compra.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
 import '../widgets/indicador_inventario.dart';
 
 class VistaPedido extends StatefulWidget {
-  final OfertaLote oferta;
+  final OfertaAgricola oferta;
   final int cantidadInicial;
 
   const VistaPedido({super.key, required this.oferta, required this.cantidadInicial});
@@ -18,21 +18,21 @@ class VistaPedido extends StatefulWidget {
 
 class _VistaPedidoState extends State<VistaPedido> {
   late int _cantidad;
-  late ModalidadLogisticaPedido _modalidadSeleccionada;
+  late ModalidadLogistica _modalidadSeleccionada;
 
-  List<ModalidadLogisticaPedido> get _opcionesModalidad {
+  List<ModalidadLogistica> get _opcionesModalidad {
     switch (widget.oferta.modalidadLogistica) {
-      case ModalidadLogisticaOferta.retiro:
-        return const [ModalidadLogisticaPedido.retiro];
-      case ModalidadLogisticaOferta.envioProductor:
-        return const [ModalidadLogisticaPedido.envioProductor];
-      case ModalidadLogisticaOferta.transportista:
-        return const [ModalidadLogisticaPedido.transportista];
-      case ModalidadLogisticaOferta.todas:
+      case ModalidadLogistica.retiro:
+        return const [ModalidadLogistica.retiro];
+      case ModalidadLogistica.envioProductor:
+        return const [ModalidadLogistica.envioProductor];
+      case ModalidadLogistica.transportista:
+        return const [ModalidadLogistica.transportista];
+      case ModalidadLogistica.todas:
         return const [
-          ModalidadLogisticaPedido.retiro,
-          ModalidadLogisticaPedido.envioProductor,
-          ModalidadLogisticaPedido.transportista,
+          ModalidadLogistica.retiro,
+          ModalidadLogistica.envioProductor,
+          ModalidadLogistica.transportista,
         ];
     }
   }
@@ -59,16 +59,17 @@ class _VistaPedidoState extends State<VistaPedido> {
     final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
     final compradorActual = DatosEnMemoria.usuarioActual;
 
-    final pedido = Pedido(
-      id: 'ped_${DateTime.now().millisecondsSinceEpoch}',
+    final solicitud = SolicitudCompra(
+      id: 'sol_${DateTime.now().millisecondsSinceEpoch}',
       ofertaId: oferta.id,
       compradorId: compradorActual?.id ?? '',
       productorId: oferta.productorId,
       cantidadSolicitada: _cantidad,
       precioUnitario: oferta.precioUnitario,
       modalidadLogistica: _modalidadSeleccionada,
+      estado: EstadoSolicitud.confirmado,
     );
-    DatosEnMemoria.registrarPedido(pedido);
+    DatosEnMemoria.registrarSolicitud(solicitud);
 
     showDialog(
       context: context,
@@ -245,7 +246,7 @@ class _VistaPedidoState extends State<VistaPedido> {
             const SizedBox(height: 20),
             Text('Modalidad de entrega', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            DropdownButtonFormField<ModalidadLogisticaPedido>(
+            DropdownButtonFormField<ModalidadLogistica>(
               initialValue: _modalidadSeleccionada,
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.local_shipping),

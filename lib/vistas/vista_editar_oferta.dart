@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_oferta_lote.dart';
+import '../modelos/modelo_oferta_agricola.dart';
 import '../tema_app.dart';
 import '../widgets/indicador_inventario.dart';
 import '../widgets/resumen_liquidacion.dart';
@@ -18,7 +18,7 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _controladorPrecio;
 
-  OfertaLote? get _oferta => DatosEnMemoria.obtenerOfertaLotePorId(widget.ofertaId);
+  OfertaAgricola? get _oferta => DatosEnMemoria.obtenerOfertaPorId(widget.ofertaId);
 
   double get _precioEnEdicion =>
       double.tryParse(_controladorPrecio.text) ?? _oferta?.precioUnitario ?? 0;
@@ -37,14 +37,14 @@ class _VistaEditarOfertaState extends State<VistaEditarOferta> {
     super.dispose();
   }
 
-  Color _fondoEstado(OfertaLote oferta) {
+  Color _fondoEstado(OfertaAgricola oferta) {
     if (oferta.estado == EstadoOferta.pausada) return ColoresApp.naranjaAviso;
     if (oferta.estado == EstadoOferta.agotado) return Colors.grey.shade300;
     if (oferta.cantidadDisponible < oferta.cantidadTotal) return ColoresApp.amarilloDestacado;
     return ColoresApp.verdeClaro.withValues(alpha: 0.25);
   }
 
-  Color _textoEstado(OfertaLote oferta) {
+  Color _textoEstado(OfertaAgricola oferta) {
     if (oferta.estado == EstadoOferta.agotado) return Colors.black54;
     if (oferta.estado == EstadoOferta.disponible &&
         oferta.cantidadDisponible >= oferta.cantidadTotal) {

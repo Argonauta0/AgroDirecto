@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_oferta_lote.dart';
+import '../modelos/modelo_oferta_agricola.dart';
 import '../tema_app.dart';
 import 'indicador_inventario.dart';
 
 class TarjetaProducto extends StatelessWidget {
-  final OfertaLote oferta;
+  final OfertaAgricola oferta;
   final VoidCallback onTap;
   final VoidCallback? onEliminar;
 
@@ -20,14 +20,14 @@ class TarjetaProducto extends StatelessWidget {
   /// "Parcialmente Vendida" y "Pausada" usan relleno sólido para llamar la
   /// atención; "Agotada" usa gris neutro. El texto se resuelve con
   /// [ColoresApp.colorTextoSobre] para garantizar contraste WCAG AA.
-  Color _fondoEstado(OfertaLote oferta) {
+  Color _fondoEstado(OfertaAgricola oferta) {
     if (oferta.estado == EstadoOferta.pausada) return ColoresApp.naranjaAviso;
     if (oferta.estado == EstadoOferta.agotado) return Colors.grey.shade300;
     if (oferta.cantidadDisponible < oferta.cantidadTotal) return ColoresApp.amarilloDestacado;
     return ColoresApp.verdeClaro.withValues(alpha: 0.25);
   }
 
-  Color _textoEstado(OfertaLote oferta) {
+  Color _textoEstado(OfertaAgricola oferta) {
     if (oferta.estado == EstadoOferta.agotado) return Colors.black54;
     if (oferta.estado == EstadoOferta.disponible &&
         oferta.cantidadDisponible >= oferta.cantidadTotal) {

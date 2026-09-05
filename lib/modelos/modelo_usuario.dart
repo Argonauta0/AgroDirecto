@@ -3,13 +3,35 @@ enum RolSeguridad {
   auditor,
   usuario;
 
-  String toJson() => name.toUpperCase();
+  static const Map<RolSeguridad, String> _valoresDb = {
+    RolSeguridad.admin: 'ADMIN',
+    RolSeguridad.auditor: 'AUDITOR',
+    RolSeguridad.usuario: 'USUARIO',
+  };
+
+  String toJson() => _valoresDb[this]!;
 
   static RolSeguridad fromJson(String valor) {
-    return RolSeguridad.values.firstWhere(
-      (rol) => rol.name.toUpperCase() == valor.toUpperCase(),
-      orElse: () => RolSeguridad.usuario,
-    );
+    final valorNormalizado = valor.toUpperCase();
+    return _valoresDb.entries
+        .firstWhere(
+          (entrada) => entrada.value == valorNormalizado,
+          orElse: () => const MapEntry(RolSeguridad.usuario, 'USUARIO'),
+        )
+        .key;
+  }
+}
+
+extension RolSeguridadEtiqueta on RolSeguridad {
+  String get etiqueta {
+    switch (this) {
+      case RolSeguridad.admin:
+        return 'Administrador';
+      case RolSeguridad.auditor:
+        return 'Auditor';
+      case RolSeguridad.usuario:
+        return 'Usuario';
+    }
   }
 }
 
@@ -17,13 +39,32 @@ enum TipoPerfil {
   productor,
   comprador;
 
-  String toJson() => name.toUpperCase();
+  static const Map<TipoPerfil, String> _valoresDb = {
+    TipoPerfil.productor: 'PRODUCTOR',
+    TipoPerfil.comprador: 'COMPRADOR',
+  };
+
+  String toJson() => _valoresDb[this]!;
 
   static TipoPerfil fromJson(String valor) {
-    return TipoPerfil.values.firstWhere(
-      (tipo) => tipo.name.toUpperCase() == valor.toUpperCase(),
-      orElse: () => TipoPerfil.productor,
-    );
+    final valorNormalizado = valor.toUpperCase();
+    return _valoresDb.entries
+        .firstWhere(
+          (entrada) => entrada.value == valorNormalizado,
+          orElse: () => const MapEntry(TipoPerfil.productor, 'PRODUCTOR'),
+        )
+        .key;
+  }
+}
+
+extension TipoPerfilEtiqueta on TipoPerfil {
+  String get etiqueta {
+    switch (this) {
+      case TipoPerfil.productor:
+        return 'Productor';
+      case TipoPerfil.comprador:
+        return 'Comprador';
+    }
   }
 }
 
@@ -112,4 +153,39 @@ class Usuario {
       creadoEn: creadoEn ?? this.creadoEn,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Usuario &&
+        other.id == id &&
+        other.nombreCompleto == nombreCompleto &&
+        other.telefono == telefono &&
+        other.passwordHash == passwordHash &&
+        other.rolSeguridad == rolSeguridad &&
+        other.tipoPerfil == tipoPerfil &&
+        other.departamento == departamento &&
+        other.municipio == municipio &&
+        other.direccionExacta == direccionExacta &&
+        other.creadoEn == creadoEn;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        nombreCompleto,
+        telefono,
+        passwordHash,
+        rolSeguridad,
+        tipoPerfil,
+        departamento,
+        municipio,
+        direccionExacta,
+        creadoEn,
+      );
+
+  @override
+  String toString() =>
+      'Usuario(id: $id, nombreCompleto: $nombreCompleto, tipoPerfil: $tipoPerfil, '
+      'rolSeguridad: $rolSeguridad, telefono: $telefono)';
 }

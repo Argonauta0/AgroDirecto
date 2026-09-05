@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_oferta_lote.dart';
+import '../modelos/modelo_oferta_agricola.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 import '../widgets/resumen_liquidacion.dart';
@@ -18,7 +18,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
 
   Producto? _productoSeleccionado;
   UnidadMedida _unidadSeleccionada = UnidadMedida.quintal;
-  ModalidadLogisticaOferta _modalidadSeleccionada = ModalidadLogisticaOferta.todas;
+  ModalidadLogistica _modalidadSeleccionada = ModalidadLogistica.todas;
 
   final TextEditingController _controladorCantidad = TextEditingController();
   final TextEditingController _controladorPrecio = TextEditingController();
@@ -50,7 +50,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
 
     final cantidad = int.parse(_controladorCantidad.text);
 
-    final oferta = OfertaLote(
+    final oferta = OfertaAgricola(
       id: 'of_${DateTime.now().millisecondsSinceEpoch}',
       productorId: productorActual.id,
       productoId: producto.id,
@@ -62,7 +62,7 @@ class _VistaPublicarState extends State<VistaPublicar> {
       fechaCosecha: DateTime.now(),
     );
 
-    DatosEnMemoria.agregarOfertaLote(oferta);
+    DatosEnMemoria.agregarOferta(oferta);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -154,14 +154,14 @@ class _VistaPublicarState extends State<VistaPublicar> {
               onChanged: (v) => setState(() => _unidadSeleccionada = v ?? _unidadSeleccionada),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<ModalidadLogisticaOferta>(
+            DropdownButtonFormField<ModalidadLogistica>(
               initialValue: _modalidadSeleccionada,
               decoration: InputDecoration(
                 labelText: 'Modalidad de entrega',
                 prefixIcon: const Icon(Icons.local_shipping),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              items: ModalidadLogisticaOferta.values
+              items: ModalidadLogistica.values
                   .map((m) => DropdownMenuItem(value: m, child: Text(m.etiqueta)))
                   .toList(),
               onChanged: (v) => setState(() => _modalidadSeleccionada = v ?? _modalidadSeleccionada),

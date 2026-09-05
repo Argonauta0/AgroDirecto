@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_oferta_lote.dart';
+import '../modelos/modelo_oferta_agricola.dart';
 import '../tema_app.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'vista_editar_oferta.dart';
@@ -30,18 +30,18 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
     setState(() {});
   }
 
-  void _verDetalle(BuildContext context, OfertaLote oferta, String etiqueta) {
+  void _verDetalle(BuildContext context, OfertaAgricola oferta, String etiqueta) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(etiqueta)));
   }
 
-  Future<void> _editarOferta(BuildContext context, OfertaLote oferta) async {
+  Future<void> _editarOferta(BuildContext context, OfertaAgricola oferta) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => VistaEditarOferta(ofertaId: oferta.id)),
     );
     setState(() {});
   }
 
-  Future<void> _confirmarEliminar(BuildContext context, OfertaLote oferta) async {
+  Future<void> _confirmarEliminar(BuildContext context, OfertaAgricola oferta) async {
     final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
     final nombre = producto?.nombre ?? 'este lote';
 
@@ -64,7 +64,7 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
 
     if (confirmar != true) return;
 
-    DatosEnMemoria.eliminarOfertaLote(oferta.id);
+    DatosEnMemoria.eliminarOferta(oferta.id);
     setState(() {});
 
     if (!context.mounted) return;
@@ -77,10 +77,10 @@ class _VistaPanelProductorState extends State<VistaPanelProductor> {
   Widget build(BuildContext context) {
     final productorActual = DatosEnMemoria.usuarioActual;
     final idProductor = productorActual?.id;
-    final List<OfertaLote> misOfertas = DatosEnMemoria.ofertasLote
+    final List<OfertaAgricola> misOfertas = DatosEnMemoria.ofertas
         .where((o) => o.productorId == idProductor)
         .toList();
-    final List<OfertaLote> otrasOfertas = DatosEnMemoria.ofertasLote
+    final List<OfertaAgricola> otrasOfertas = DatosEnMemoria.ofertas
         .where((o) => o.productorId != idProductor)
         .toList();
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../datos_en_memoria.dart';
-import '../modelos/modelo_oferta_lote.dart';
+import '../modelos/modelo_oferta_agricola.dart';
 import '../modelos/modelo_producto.dart';
 import '../tema_app.dart';
 import '../utilidades/formato_fecha.dart';
@@ -9,10 +9,10 @@ import '../widgets/tarjeta_producto.dart';
 import 'vista_login.dart';
 import 'vista_pedido.dart';
 
-const List<ModalidadLogisticaOferta> _modalidadesFiltrables = [
-  ModalidadLogisticaOferta.retiro,
-  ModalidadLogisticaOferta.envioProductor,
-  ModalidadLogisticaOferta.transportista,
+const List<ModalidadLogistica> _modalidadesFiltrables = [
+  ModalidadLogistica.retiro,
+  ModalidadLogistica.envioProductor,
+  ModalidadLogistica.transportista,
 ];
 
 class _FiltrosCatalogo {
@@ -20,7 +20,7 @@ class _FiltrosCatalogo {
   final RangeValues rangoPrecio;
   final String? departamento;
   final String? municipio;
-  final Set<ModalidadLogisticaOferta> modalidades;
+  final Set<ModalidadLogistica> modalidades;
 
   const _FiltrosCatalogo({
     required this.cultivo,
@@ -49,12 +49,12 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
   late RangeValues _rangoPrecio;
   String? _departamentoSeleccionado;
   String? _municipioSeleccionado;
-  Set<ModalidadLogisticaOferta> _modalidadesSeleccionadas = {};
+  Set<ModalidadLogistica> _modalidadesSeleccionadas = {};
 
   @override
   void initState() {
     super.initState();
-    final precios = DatosEnMemoria.ofertasLote.map((o) => o.precioUnitario).toList();
+    final precios = DatosEnMemoria.ofertas.map((o) => o.precioUnitario).toList();
     _precioMinimo = precios.isEmpty ? 0 : precios.reduce((a, b) => a < b ? a : b);
     _precioMaximo = precios.isEmpty ? 1000 : precios.reduce((a, b) => a > b ? a : b);
     if (_precioMaximo <= _precioMinimo) {
@@ -78,7 +78,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
       _municipioSeleccionado != null ||
       _modalidadesSeleccionadas.isNotEmpty;
 
-  List<OfertaLote> get _ofertasFiltradas {
+  List<OfertaAgricola> get _ofertasFiltradas {
     return DatosEnMemoria.ofertasDisponibles.where((oferta) {
       final producto = DatosEnMemoria.obtenerProductoPorId(oferta.productoId);
       final productor = DatosEnMemoria.obtenerUsuarioPorId(oferta.productorId);
@@ -101,7 +101,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
 
       final coincideModalidad = _modalidadesSeleccionadas.isEmpty ||
           _modalidadesSeleccionadas.contains(oferta.modalidadLogistica) ||
-          oferta.modalidadLogistica == ModalidadLogisticaOferta.todas;
+          oferta.modalidadLogistica == ModalidadLogistica.todas;
 
       return coincideTexto &&
           coincideCultivo &&
@@ -161,7 +161,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
     );
   }
 
-  void _abrirFichaTrazabilidad(OfertaLote oferta) {
+  void _abrirFichaTrazabilidad(OfertaAgricola oferta) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -300,7 +300,7 @@ class _VistaCatalogoState extends State<VistaCatalogo> {
 }
 
 class _FichaTrazabilidad extends StatelessWidget {
-  final OfertaLote oferta;
+  final OfertaAgricola oferta;
 
   const _FichaTrazabilidad({required this.oferta});
 
@@ -542,7 +542,7 @@ class _HojaFiltros extends StatefulWidget {
   final double precioMaximo;
   final String? departamentoSeleccionado;
   final String? municipioSeleccionado;
-  final Set<ModalidadLogisticaOferta> modalidadesSeleccionadas;
+  final Set<ModalidadLogistica> modalidadesSeleccionadas;
 
   const _HojaFiltros({
     required this.cultivoSeleccionado,
@@ -563,7 +563,7 @@ class _HojaFiltrosState extends State<_HojaFiltros> {
   late RangeValues _rango;
   late String? _departamento;
   late String? _municipio;
-  late Set<ModalidadLogisticaOferta> _modalidades;
+  late Set<ModalidadLogistica> _modalidades;
 
   @override
   void initState() {

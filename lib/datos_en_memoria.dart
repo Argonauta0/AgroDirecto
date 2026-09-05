@@ -1,10 +1,15 @@
-import 'modelos/modelo_oferta_lote.dart';
-import 'modelos/modelo_pedido.dart';
+import 'modelos/modelo_factura.dart';
+import 'modelos/modelo_oferta_agricola.dart';
 import 'modelos/modelo_producto.dart';
+import 'modelos/modelo_solicitud_compra.dart';
 import 'modelos/modelo_usuario.dart';
 
 class DatosEnMemoria {
   DatosEnMemoria._();
+
+  /// Porcentaje de comisión de la plataforma aplicado a cada solicitud
+  /// confirmada, consistente con [ResumenLiquidacion.tasaComision].
+  static const double porcentajeComisionPlataforma = 6.0;
 
   static final List<Usuario> usuarios = [
     Usuario(
@@ -68,8 +73,8 @@ class DatosEnMemoria {
     Producto(id: 'prod_cit_5', nombre: 'Mandarina', categoria: 'Cítricos'),
   ];
 
-  static final List<OfertaLote> ofertasLote = [
-    OfertaLote(
+  static final List<OfertaAgricola> ofertas = [
+    OfertaAgricola(
       id: 'of1',
       productorId: 'prod1',
       productoId: 'prod_cit_1',
@@ -77,10 +82,10 @@ class DatosEnMemoria {
       unidadMedida: UnidadMedida.quintal,
       cantidadTotal: 20,
       cantidadDisponible: 20,
-      modalidadLogistica: ModalidadLogisticaOferta.todas,
+      modalidadLogistica: ModalidadLogistica.todas,
       fechaCosecha: DateTime(2026, 8, 18),
     ),
-    OfertaLote(
+    OfertaAgricola(
       id: 'of2',
       productorId: 'prod2',
       productoId: 'prod_cit_2',
@@ -88,10 +93,10 @@ class DatosEnMemoria {
       unidadMedida: UnidadMedida.quintal,
       cantidadTotal: 15,
       cantidadDisponible: 15,
-      modalidadLogistica: ModalidadLogisticaOferta.envioProductor,
+      modalidadLogistica: ModalidadLogistica.envioProductor,
       fechaCosecha: DateTime(2026, 8, 19),
     ),
-    OfertaLote(
+    OfertaAgricola(
       id: 'of3',
       productorId: 'prod3',
       productoId: 'prod_cit_3',
@@ -99,10 +104,10 @@ class DatosEnMemoria {
       unidadMedida: UnidadMedida.cien,
       cantidadTotal: 30,
       cantidadDisponible: 30,
-      modalidadLogistica: ModalidadLogisticaOferta.transportista,
+      modalidadLogistica: ModalidadLogistica.transportista,
       fechaCosecha: DateTime(2026, 8, 15),
     ),
-    OfertaLote(
+    OfertaAgricola(
       id: 'of4',
       productorId: 'prod4',
       productoId: 'prod_cit_4',
@@ -110,10 +115,10 @@ class DatosEnMemoria {
       unidadMedida: UnidadMedida.cien,
       cantidadTotal: 25,
       cantidadDisponible: 25,
-      modalidadLogistica: ModalidadLogisticaOferta.retiro,
+      modalidadLogistica: ModalidadLogistica.retiro,
       fechaCosecha: DateTime(2026, 8, 20),
     ),
-    OfertaLote(
+    OfertaAgricola(
       id: 'of5',
       productorId: 'prod1',
       productoId: 'prod_cit_5',
@@ -121,12 +126,13 @@ class DatosEnMemoria {
       unidadMedida: UnidadMedida.cien,
       cantidadTotal: 18,
       cantidadDisponible: 18,
-      modalidadLogistica: ModalidadLogisticaOferta.todas,
+      modalidadLogistica: ModalidadLogistica.todas,
       fechaCosecha: DateTime(2026, 8, 21),
     ),
   ];
 
-  static final List<Pedido> pedidos = [];
+  static final List<SolicitudCompra> solicitudes = [];
+  static final List<Factura> facturas = [];
 
   static void agregarUsuario(Usuario usuario) {
     usuarios.insert(0, usuario);
@@ -152,36 +158,36 @@ class DatosEnMemoria {
     return catalogoProductos.where((p) => p.categoria == categoria).toList();
   }
 
-  static void agregarOfertaLote(OfertaLote oferta) {
-    ofertasLote.insert(0, oferta);
+  static void agregarOferta(OfertaAgricola oferta) {
+    ofertas.insert(0, oferta);
   }
 
-  static void eliminarOfertaLote(String id) {
-    ofertasLote.removeWhere((o) => o.id == id);
+  static void eliminarOferta(String id) {
+    ofertas.removeWhere((o) => o.id == id);
   }
 
-  static OfertaLote? obtenerOfertaLotePorId(String id) {
+  static OfertaAgricola? obtenerOfertaPorId(String id) {
     try {
-      return ofertasLote.firstWhere((o) => o.id == id);
+      return ofertas.firstWhere((o) => o.id == id);
     } catch (_) {
       return null;
     }
   }
 
-  static void actualizarOferta(OfertaLote actualizada) {
-    final indice = ofertasLote.indexWhere((o) => o.id == actualizada.id);
+  static void actualizarOferta(OfertaAgricola actualizada) {
+    final indice = ofertas.indexWhere((o) => o.id == actualizada.id);
     if (indice == -1) return;
-    ofertasLote[indice] = actualizada;
+    ofertas[indice] = actualizada;
   }
 
   static void actualizarPrecioOferta(String id, double nuevoPrecio) {
-    final oferta = obtenerOfertaLotePorId(id);
+    final oferta = obtenerOfertaPorId(id);
     if (oferta == null) return;
     actualizarOferta(oferta.copyWith(precioUnitario: nuevoPrecio));
   }
 
   static void alternarPausaOferta(String id) {
-    final oferta = obtenerOfertaLotePorId(id);
+    final oferta = obtenerOfertaPorId(id);
     if (oferta == null || oferta.estado == EstadoOferta.agotado) return;
     actualizarOferta(
       oferta.copyWith(
@@ -192,24 +198,52 @@ class DatosEnMemoria {
     );
   }
 
-  static List<OfertaLote> get ofertasDisponibles =>
-      ofertasLote.where((o) => o.estaDisponible).toList();
+  static List<OfertaAgricola> get ofertasDisponibles =>
+      ofertas.where((o) => o.estaDisponible).toList();
 
-  static List<OfertaLote> ofertasPorProductor(String productorId) =>
-      ofertasLote.where((o) => o.productorId == productorId).toList();
+  static List<OfertaAgricola> ofertasPorProductor(String productorId) =>
+      ofertas.where((o) => o.productorId == productorId).toList();
 
-  static void registrarPedido(Pedido pedido) {
-    pedidos.insert(0, pedido);
+  /// Confirma una solicitud de compra: descuenta el inventario de la oferta,
+  /// agota la oferta si corresponde, y emite la [Factura] con el desglose de
+  /// comisión de la plataforma.
+  static Factura registrarSolicitud(SolicitudCompra solicitud) {
+    solicitudes.insert(0, solicitud);
 
-    final indice = ofertasLote.indexWhere((o) => o.id == pedido.ofertaId);
-    if (indice == -1) return;
+    final indice = ofertas.indexWhere((o) => o.id == solicitud.ofertaId);
+    if (indice != -1) {
+      final oferta = ofertas[indice];
+      final nuevaCantidad = oferta.cantidadDisponible - solicitud.cantidadSolicitada;
+      ofertas[indice] = oferta.copyWith(
+        cantidadDisponible: nuevaCantidad < 0 ? 0 : nuevaCantidad,
+        estado: nuevaCantidad <= 0 ? EstadoOferta.agotado : oferta.estado,
+      );
+    }
 
-    final oferta = ofertasLote[indice];
-    final nuevaCantidad = oferta.cantidadDisponible - pedido.cantidadSolicitada;
-    ofertasLote[indice] = oferta.copyWith(
-      cantidadDisponible: nuevaCantidad < 0 ? 0 : nuevaCantidad,
-      estado: nuevaCantidad <= 0 ? EstadoOferta.agotado : oferta.estado,
+    final subtotal = solicitud.subtotal;
+    final montoComision = subtotal * (porcentajeComisionPlataforma / 100);
+    final factura = Factura(
+      id: 'fac_${DateTime.now().millisecondsSinceEpoch}',
+      solicitudCompraId: solicitud.id,
+      numeroFactura: 'FAC-${DateTime.now().millisecondsSinceEpoch}',
+      subtotal: subtotal,
+      porcentajeComision: porcentajeComisionPlataforma,
+      montoComision: montoComision,
+      montoProductor: subtotal - montoComision,
+      totalPagado: subtotal,
+      metodoPago: MetodoPago.efectivo,
+      estadoPago: EstadoPago.pendiente,
     );
+    facturas.insert(0, factura);
+    return factura;
+  }
+
+  static Factura? obtenerFacturaPorSolicitudId(String solicitudCompraId) {
+    try {
+      return facturas.firstWhere((f) => f.solicitudCompraId == solicitudCompraId);
+    } catch (_) {
+      return null;
+    }
   }
 
   static Usuario? usuarioActual;

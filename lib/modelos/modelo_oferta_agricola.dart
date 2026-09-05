@@ -1,10 +1,12 @@
 enum UnidadMedida {
   quintal,
-  cien;
+  cien,
+  kg;
 
   static const Map<UnidadMedida, String> _valoresDb = {
     UnidadMedida.quintal: 'QUINTAL',
     UnidadMedida.cien: 'CIEN',
+    UnidadMedida.kg: 'KG',
   };
 
   String toJson() => _valoresDb[this]!;
@@ -27,46 +29,50 @@ extension UnidadMedidaEtiqueta on UnidadMedida {
         return 'Quintal';
       case UnidadMedida.cien:
         return 'Cien';
+      case UnidadMedida.kg:
+        return 'Kilogramo';
     }
   }
 }
 
-enum ModalidadLogisticaOferta {
+/// Modalidad de logística acordada. Compartida entre [OfertaAgricola] y
+/// SolicitudCompra (modelo_solicitud_compra.dart) según el DER.
+enum ModalidadLogistica {
   retiro,
   envioProductor,
   transportista,
   todas;
 
-  static const Map<ModalidadLogisticaOferta, String> _valoresDb = {
-    ModalidadLogisticaOferta.retiro: 'RETIRO',
-    ModalidadLogisticaOferta.envioProductor: 'ENVIO_PRODUCTOR',
-    ModalidadLogisticaOferta.transportista: 'TRANSPORTISTA',
-    ModalidadLogisticaOferta.todas: 'TODAS',
+  static const Map<ModalidadLogistica, String> _valoresDb = {
+    ModalidadLogistica.retiro: 'RETIRO',
+    ModalidadLogistica.envioProductor: 'ENVIO_PRODUCTOR',
+    ModalidadLogistica.transportista: 'TRANSPORTISTA',
+    ModalidadLogistica.todas: 'TODAS',
   };
 
   String toJson() => _valoresDb[this]!;
 
-  static ModalidadLogisticaOferta fromJson(String valor) {
+  static ModalidadLogistica fromJson(String valor) {
     final valorNormalizado = valor.toUpperCase();
     return _valoresDb.entries
         .firstWhere(
           (entrada) => entrada.value == valorNormalizado,
-          orElse: () => const MapEntry(ModalidadLogisticaOferta.todas, 'TODAS'),
+          orElse: () => const MapEntry(ModalidadLogistica.todas, 'TODAS'),
         )
         .key;
   }
 }
 
-extension ModalidadLogisticaOfertaEtiqueta on ModalidadLogisticaOferta {
+extension ModalidadLogisticaEtiqueta on ModalidadLogistica {
   String get etiqueta {
     switch (this) {
-      case ModalidadLogisticaOferta.retiro:
+      case ModalidadLogistica.retiro:
         return 'Retiro en finca';
-      case ModalidadLogisticaOferta.envioProductor:
+      case ModalidadLogistica.envioProductor:
         return 'Envío del productor';
-      case ModalidadLogisticaOferta.transportista:
+      case ModalidadLogistica.transportista:
         return 'Transportista';
-      case ModalidadLogisticaOferta.todas:
+      case ModalidadLogistica.todas:
         return 'Todas las modalidades';
     }
   }
@@ -74,13 +80,13 @@ extension ModalidadLogisticaOfertaEtiqueta on ModalidadLogisticaOferta {
 
 enum EstadoOferta {
   disponible,
-  pausada,
-  agotado;
+  agotado,
+  pausada;
 
   static const Map<EstadoOferta, String> _valoresDb = {
     EstadoOferta.disponible: 'DISPONIBLE',
-    EstadoOferta.pausada: 'PAUSADA',
     EstadoOferta.agotado: 'AGOTADO',
+    EstadoOferta.pausada: 'PAUSADA',
   };
 
   String toJson() => _valoresDb[this]!;
@@ -101,15 +107,15 @@ extension EstadoOfertaEtiqueta on EstadoOferta {
     switch (this) {
       case EstadoOferta.disponible:
         return 'Disponible';
-      case EstadoOferta.pausada:
-        return 'Pausada';
       case EstadoOferta.agotado:
         return 'Agotado';
+      case EstadoOferta.pausada:
+        return 'Pausada';
     }
   }
 }
 
-class OfertaLote {
+class OfertaAgricola {
   final String id;
   final String productorId;
   final String productoId;
@@ -117,12 +123,12 @@ class OfertaLote {
   final UnidadMedida unidadMedida;
   final int cantidadTotal;
   final int cantidadDisponible;
-  final ModalidadLogisticaOferta modalidadLogistica;
+  final ModalidadLogistica modalidadLogistica;
   final DateTime? fechaCosecha;
   final EstadoOferta estado;
   final DateTime creadoEn;
 
-  OfertaLote({
+  OfertaAgricola({
     required this.id,
     required this.productorId,
     required this.productoId,
@@ -138,8 +144,8 @@ class OfertaLote {
 
   bool get estaDisponible => estado == EstadoOferta.disponible && cantidadDisponible > 0;
 
-  factory OfertaLote.fromJson(Map<String, dynamic> json) {
-    return OfertaLote(
+  factory OfertaAgricola.fromJson(Map<String, dynamic> json) {
+    return OfertaAgricola(
       id: json['id'] as String,
       productorId: json['productorId'] as String,
       productoId: json['productoId'] as String,
@@ -147,7 +153,7 @@ class OfertaLote {
       unidadMedida: UnidadMedida.fromJson(json['unidadMedida'] as String),
       cantidadTotal: json['cantidadTotal'] as int,
       cantidadDisponible: json['cantidadDisponible'] as int,
-      modalidadLogistica: ModalidadLogisticaOferta.fromJson(json['modalidadLogistica'] as String),
+      modalidadLogistica: ModalidadLogistica.fromJson(json['modalidadLogistica'] as String),
       fechaCosecha:
           json['fechaCosecha'] != null ? DateTime.parse(json['fechaCosecha'] as String) : null,
       estado: EstadoOferta.fromJson(json['estado'] as String? ?? 'DISPONIBLE'),
@@ -171,7 +177,7 @@ class OfertaLote {
     };
   }
 
-  OfertaLote copyWith({
+  OfertaAgricola copyWith({
     String? id,
     String? productorId,
     String? productoId,
@@ -179,12 +185,12 @@ class OfertaLote {
     UnidadMedida? unidadMedida,
     int? cantidadTotal,
     int? cantidadDisponible,
-    ModalidadLogisticaOferta? modalidadLogistica,
+    ModalidadLogistica? modalidadLogistica,
     DateTime? fechaCosecha,
     EstadoOferta? estado,
     DateTime? creadoEn,
   }) {
-    return OfertaLote(
+    return OfertaAgricola(
       id: id ?? this.id,
       productorId: productorId ?? this.productorId,
       productoId: productoId ?? this.productoId,
@@ -202,7 +208,7 @@ class OfertaLote {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is OfertaLote &&
+    return other is OfertaAgricola &&
         other.id == id &&
         other.productorId == productorId &&
         other.productoId == productoId &&
@@ -233,14 +239,17 @@ class OfertaLote {
 
   @override
   String toString() =>
-      'OfertaLote(id: $id, productoId: $productoId, productorId: $productorId, '
+      'OfertaAgricola(id: $id, productoId: $productoId, productorId: $productorId, '
       'precioUnitario: $precioUnitario, cantidadDisponible: $cantidadDisponible, estado: $estado)';
 }
 
-extension OfertaLoteEstadoVisual on OfertaLote {
+extension OfertaAgricolaEstadoVisual on OfertaAgricola {
+  /// Texto de estado mostrado en catálogo, panel del productor y ficha de
+  /// trazabilidad: distingue "Parcialmente Vendida" de "Activa" según el
+  /// inventario, algo que [EstadoOferta.etiqueta] por sí solo no refleja.
   String get estadoVisualTexto {
     if (estado == EstadoOferta.pausada) return 'Pausada';
-    if (estado == EstadoOferta.agotado || cantidadDisponible <= 0) return 'Agotada';
+    if (estado == EstadoOferta.agotado) return 'Agotada';
     if (cantidadDisponible < cantidadTotal) return 'Parcialmente Vendida';
     return 'Activa';
   }
