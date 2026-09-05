@@ -5,6 +5,7 @@ import '../modelos/modelo_oferta_agricola.dart';
 import '../modelos/modelo_producto.dart';
 import '../modelos/modelo_solicitud_compra.dart';
 import '../modelos/modelo_usuario.dart';
+import '../utilidades/seguridad.dart';
 
 /// Servicio de acceso a datos respaldado por Supabase/PostgreSQL. Reemplaza
 /// al antiguo repositorio en memoria (`DatosEnMemoria`): las vistas ya no
@@ -37,13 +38,14 @@ class ServicioSupabase {
   }
 
   static Future<Usuario?> login(String telefono, String password) async {
-    final fila = await _cliente
-        .from('usuario')
-        .select()
-        .eq('telefono', telefono)
-        .eq('passwordHash', password)
-        .maybeSingle();
+    final fila =
+        await _cliente.from('usuario').select().eq('telefono', telefono).maybeSingle();
     if (fila == null) return null;
+
+    final hashGuardado = fila['passwordHash'] as String? ?? '';
+    final contrasenaValida = await verificarContrasena(password, hashGuardado);
+    if (!contrasenaValida) return null;
+
     return Usuario.fromJson(fila);
   }
 

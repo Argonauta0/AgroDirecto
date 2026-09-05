@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../modelos/modelo_usuario.dart';
 import '../servicios/servicio_supabase.dart';
 import '../tema_app.dart';
+import '../utilidades/seguridad.dart';
 import 'vista_catalogo.dart';
 import 'vista_panel_productor.dart';
 
@@ -23,6 +24,9 @@ class _VistaRegistroState extends State<VistaRegistro> {
   final TextEditingController _controladorMunicipio = TextEditingController();
   final TextEditingController _controladorDireccion = TextEditingController();
   final TextEditingController _controladorTelefono = TextEditingController();
+  final TextEditingController _controladorPassword = TextEditingController();
+  final TextEditingController _controladorConfirmarPassword = TextEditingController();
+  bool _passwordVisible = false;
 
   final List<String> _tiposDeNegocio = const [
     'Supermercado',
@@ -41,6 +45,8 @@ class _VistaRegistroState extends State<VistaRegistro> {
     _controladorMunicipio.dispose();
     _controladorDireccion.dispose();
     _controladorTelefono.dispose();
+    _controladorPassword.dispose();
+    _controladorConfirmarPassword.dispose();
     super.dispose();
   }
 
@@ -52,23 +58,25 @@ class _VistaRegistroState extends State<VistaRegistro> {
     if (_registrando) return;
     if (!_formKey.currentState!.validate()) return;
 
-    final esProductor = _rolSeleccionado == _RolRegistro.productor;
-    final direccionExacta = esProductor
-        ? _controladorDireccion.text.trim()
-        : '$_tipoNegocioSeleccionado, ${_controladorDireccion.text.trim()}';
-
-    final usuario = Usuario(
-      id: '${esProductor ? 'prod' : 'comp'}_${DateTime.now().millisecondsSinceEpoch}',
-      nombreCompleto: _controladorNombre.text.trim(),
-      telefono: _controladorTelefono.text.trim(),
-      tipoPerfil: esProductor ? TipoPerfil.productor : TipoPerfil.comprador,
-      departamento: _controladorDepartamento.text.trim(),
-      municipio: _controladorMunicipio.text.trim(),
-      direccionExacta: direccionExacta,
-    );
-
     setState(() => _registrando = true);
     try {
+      final esProductor = _rolSeleccionado == _RolRegistro.productor;
+      final direccionExacta = esProductor
+          ? _controladorDireccion.text.trim()
+          : '$_tipoNegocioSeleccionado, ${_controladorDireccion.text.trim()}';
+      final passwordHash = await hashContrasena(_controladorPassword.text);
+
+      final usuario = Usuario(
+        id: '${esProductor ? 'prod' : 'comp'}_${DateTime.now().millisecondsSinceEpoch}',
+        nombreCompleto: _controladorNombre.text.trim(),
+        telefono: _controladorTelefono.text.trim(),
+        tipoPerfil: esProductor ? TipoPerfil.productor : TipoPerfil.comprador,
+        departamento: _controladorDepartamento.text.trim(),
+        municipio: _controladorMunicipio.text.trim(),
+        direccionExacta: direccionExacta,
+        passwordHash: passwordHash,
+      );
+
       await ServicioSupabase.registrarUsuario(usuario);
       ServicioSupabase.usuarioActual = usuario;
       if (!mounted) return;
@@ -183,6 +191,7 @@ class _VistaRegistroState extends State<VistaRegistro> {
           ),
           const SizedBox(height: 24),
           if (esProductor) ..._camposProductor() else ..._camposComprador(),
+          ..._camposPassword(),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _registrando ? null : _registrar,
@@ -235,11 +244,11 @@ class _VistaRegistroState extends State<VistaRegistro> {
       TextFormField(
         controller: _controladorDireccion,
         decoration: InputDecoration(
-          labelText: 'Finca o comunidad',
+          labelText: 'Dirección exacta (finca o comunidad)',
           prefixIcon: const Icon(Icons.location_on),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu finca o comunidad' : null,
+        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu dirección exacta' : null,
       ),
       const SizedBox(height: 12),
       TextFormField(
@@ -251,6 +260,39 @@ class _VistaRegistroState extends State<VistaRegistro> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu teléfono' : null,
+      ),
+    ];
+  }
+
+  List<Widget> _camposPassword() {
+    return [
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _controladorPassword,
+        obscureText: !_passwordVisible,
+        decoration: InputDecoration(
+          labelText: 'Contraseña',
+          prefixIcon: const Icon(Icons.lock),
+          suffixIcon: IconButton(
+            icon: Icon(_passwordVisible ? Icons.visibility_off : Icons.visibility),
+            onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
+          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (v) => (v == null || v.length < 6)
+            ? 'La contraseña debe tener al menos 6 caracteres'
+            : null,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _controladorConfirmarPassword,
+        obscureText: !_passwordVisible,
+        decoration: InputDecoration(
+          labelText: 'Confirmar contraseña',
+          prefixIcon: const Icon(Icons.lock_outline),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (v) => (v != _controladorPassword.text) ? 'Las contraseñas no coinciden' : null,
       ),
     ];
   }
