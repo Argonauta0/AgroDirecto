@@ -6,7 +6,7 @@
 ![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)
 
 
-> Aplicación móvil que conecta directamente a productores agrícolas con compradores (restaurantes, comedores, supermercados), eliminando intermediarios en la cadena de comercialización.
+AgroDirecto es una aplicación digital que conecta a pequeños agro productores nicaragüenses de cítricos directamente con compradores, facilitando la comercialización de sus productos sin intermediación comercial innecesaria.
 
 ## Stack Tecnológico y Dependencias
 
@@ -19,39 +19,11 @@
 | Iconografía         | [`cupertino_icons`](https://pub.dev/packages/cupertino_icons) `^1.0.8` |
 | Gestión de estado   | `StatefulWidget` + `setState` (estado local por vista)                 |
 | Backend / Base de datos | [Supabase](https://supabase.com) (PostgreSQL gestionado) vía [`supabase_flutter`](https://pub.dev/packages/supabase_flutter) `^2.8.0` |
-| Seguridad de contraseñas | [`cryptography`](https://pub.dev/packages/cryptography) `^2.9.0` — hashing Argon2id con sal por usuario |
+| Seguridad de contraseñas | [`cryptography`](https://pub.dev/packages/cryptography) `^2.9.0` — hashing Argon2id|
 | Linting             | [`flutter_lints`](https://pub.dev/packages/flutter_lints) `^6.0.0`     |
 | Testing             | `flutter_test` (widget tests, SDK de Flutter)                          |
 | Plataforma soportada| Android  |
 
-> **Nota:** la app ya no usa un repositorio en memoria. Los datos (usuarios, productos, ofertas agrícolas, solicitudes de compra y facturas) se persisten en tablas de Supabase/PostgreSQL a través de `lib/servicios/servicio_supabase.dart`. La URL y la clave pública (`anon`/`publishable`) del proyecto Supabase están configuradas en `lib/main.dart`; no se requiere un archivo `.env` para ejecutar la app, pero sí una conexión a internet y que el proyecto de Supabase correspondiente exista y tenga las tablas esperadas.
-
-## Backend: conexión con Supabase
-
-La app se conecta a un proyecto de Supabase al arrancar, en `lib/main.dart`:
-
-```dart
-await Supabase.initialize(
-  url: 'https://<proyecto>.supabase.co',
-  publishableKey: '<anon/publishable key>',
-);
-```
-
-- La **`publishableKey`** es la clave pública (`anon key`) de Supabase, diseñada para ser incluida en el cliente. La protección real de los datos depende de que las tablas tengan **Row Level Security (RLS)** habilitado con políticas adecuadas en el proyecto de Supabase (no versionadas en este repo).
-- Toda la lógica de acceso a datos vive en `lib/servicios/servicio_supabase.dart`, que expone métodos estáticos (`registrarUsuario`, `login`, `obtenerCatalogo`, `agregarOferta`, `procesarPedido`, etc.) sobre las tablas `usuario`, `producto`, `oferta_agricola`, `solicitud_compra` y `factura`. Las vistas ya no mantienen listas locales de dominio: consultan y mutan estas tablas de forma asíncrona.
-- **Autenticación propia (no `supabase.auth`)**: el login/registro se implementa contra la tabla `usuario` propia, no contra el sistema de Auth de Supabase. Esto implica que no hay tokens de sesión ni expiración automática — el estado de sesión se guarda en memoria en `ServicioSupabase.usuarioActual`.
-
-## Seguridad de contraseñas
-
-Las contraseñas nunca se guardan ni se transmiten en texto plano. `lib/utilidades/seguridad.dart` implementa:
-
-- **Hashing con Argon2id** (RFC 9106, recomendado por OWASP), vía `package:cryptography`, con parámetros ajustados para no bloquear la UI en dispositivos móviles (12 MiB de memoria, 3 iteraciones, paralelismo 1).
-- **Sal aleatoria distinta por usuario** (`Random.secure()`, 16 bytes), para que dos usuarios con la misma contraseña nunca produzcan el mismo hash.
-- **Formato de almacenamiento tipo PHC** en la columna `passwordHash`, autocontenido (algoritmo + parámetros + sal + hash):
-  ```
-  argon2id$m=12288,t=3,p=1$<sal en base64>$<hash en base64>
-  ```
-- **Verificación en tiempo constante** al iniciar sesión, para evitar ataques de temporización.
 
 ## Arquitectura y Estructura del Software
 
