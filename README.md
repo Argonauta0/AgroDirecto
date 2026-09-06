@@ -74,24 +74,24 @@ agro_directo/
 
 ## Requisitos Previos del Sistema
 
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) `>= 3.13` (incluye Dart `>= 3.13`)
-- [Android Studio](https://developer.android.com/studio) o [VS Code](https://code.visualstudio.com/) con el plugin de Flutter
-- Android SDK / Java (gestionados por Android Studio)
-- Un emulador Android configurado o un dispositivo físico con depuración USB habilitada
-- Git
+Antes de comenzar, asegúrate de contar con las siguientes herramientas en tu entorno de desarrollo:
 
-Verifica que tu entorno esté correctamente configurado con:
+- **[Flutter SDK](https://docs.flutter.dev/get-started/install)** `>= 3.13.0` (incluye Dart SDK `>= 3.13.0`)
+- **Java Development Kit (JDK):** Versión 17 (requerida para el build system de Gradle en Android)
+- **[Android Studio](https://developer.android.com/studio)** con Android SDK Platform, Build-Tools y emulador configurado (o dispositivo Android físico con depuración USB activa)
+- **Git**
+
+Verifica el estado de tu entorno ejecutando:
 
 ```bash
 flutter doctor
-```
 
 ## Instalación Básica y Configuración Local
 
 1. **Clonar el repositorio**
 
    ```bash
-   git clone https://github.com/<usuario>/agro_directo.git
+   git clone https://github.com/Argonauta0/AgroDirecto.git
    cd agro_directo
    ```
 
@@ -103,7 +103,7 @@ flutter doctor
 
 3. **Configuración de entorno**
 
-   La app se conecta a un proyecto de Supabase configurado directamente en `lib/main.dart` (URL + clave pública `anon`/`publishable`). No se requiere un archivo `.env`, pero sí conexión a internet y que ese proyecto Supabase exista con las tablas `usuario`, `producto`, `oferta_agricola`, `solicitud_compra` y `factura`. Si vas a apuntar a tu propio proyecto de Supabase, reemplaza `url` y `publishableKey` en `Supabase.initialize(...)`.
+   La app se conecta a un proyecto de Supabase configurado directamente en `lib/main.dart` (URL + clave pública `anon`/`publishable`). No se requiere un archivo `.env`, pero sí conexión a internet y que ese proyecto Supabase exista con las tablas `usuario`, `producto`, `oferta_agricola`, `solicitud_compra` y `factura`. 
 
 4. **Verificar dispositivos disponibles**
 
@@ -113,7 +113,7 @@ flutter doctor
 
 ## Instrucciones de Ejecución y Compilación
 
-### Ejecución en modo desarrollo
+### Inicia tu emulador Android o conecta tu teléfono físico por USB y ejecuta:
 
 ```bash
 flutter run
